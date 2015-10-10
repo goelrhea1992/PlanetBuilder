@@ -32,18 +32,53 @@ public class Player implements pb.sim.Player {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		double r = a.radius() + b.radius();
 		long period = a.orbit.period();
-		for (long ft = 0 ; ft != period ; ++ft) {
-			long t = time + ft;
-			Point p1 = new Point();
-			Point c = new Point();
+		System.out.println("period: " + period / 365.0);
+		if (period/365.0 > 500){
+			return intersection_list;
+		}
+		long ft = 0;
+		long t = time + ft;
+		Point p1 = new Point();
+		Point c = new Point();
+		a.orbit.positionAt(t - a.epoch, p1);
+		b.orbit.center(c);
+		Point foci = new Point(c.x*2,c.y*2);
+		double dist = Point.distance(p1,foci)+Point.distance(p1,foci);
+		double diff_0 = dist - b.orbit.a*2;
+		for (; ft <= period ; ft+=20) {
+			t = time + ft;
 			a.orbit.positionAt(t - a.epoch, p1);
 			b.orbit.center(c);
-			Point foci = new Point(c.x*2,c.y*2);
-			double dist = Point.distance(p1,foci)+Point.distance(p1,foci);
+			foci = new Point(c.x*2,c.y*2);
+			dist = Point.distance(p1,foci)+Point.distance(p1,foci);
+			double diff = dist - b.orbit.a*2;
+			if (Math.abs(diff -diff_0) > Math.abs(diff)){
+				for(long ft1 = ft-20;ft1<=ft;ft1++){
+					long t1 = time + ft1;
+					a.orbit.positionAt(t - a.epoch, p1);
+					b.orbit.center(c);
+					Point foci1 = new Point(c.x*2,c.y*2);
+					double dist1 = Point.distance(p1,foci1)+Point.distance(p1,foci1);
+					double diff1 = dist - b.orbit.a*2;
+					if (Math.abs(dist1 - b.orbit.a*2) < r){
+						intersection_list.add(p1);
+					}
+				}
+			}
+			diff_0 = diff;
+		}
+		for(long ft1 = ft-20;ft1!= period;ft1++){
+			t = time + ft1;
+			p1 = new Point();
+			c = new Point();
+			a.orbit.positionAt(t - a.epoch, p1);
+			b.orbit.center(c);
+			foci = new Point(c.x*2,c.y*2);
+			dist = Point.distance(p1,foci)+Point.distance(p1,foci);
+			double diff = dist - b.orbit.a*2;
 			if (Math.abs(dist - b.orbit.a*2) < r){
 				intersection_list.add(p1);
 			}
-				
 		}
 		return intersection_list;
 	}
