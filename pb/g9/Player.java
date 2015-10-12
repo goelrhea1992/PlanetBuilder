@@ -1,4 +1,4 @@
-package pb.g9;
+﻿package pb.g9;
 
 import pb.sim.Point;
 import pb.sim.Orbit;
@@ -248,6 +248,58 @@ public class Player implements pb.sim.Player {
 		}
 		return max;
 	}
+	
+	private int GetMinDistanceTime(Asteroid a, Asteroid  b){
+		double minDistance = -1;
+		int minDistTime = -1;
+		for(int t = 0; t < 20*365; t++){
+			double distance = Point.distance(a.orbit.positionAt((long)t - a.epoch),b.orbit.positionAt((long)t - b.epoch));
+			if(minDistance == -1){
+				minDistance = distance;
+				minDistTime = t;
+			}
+			else{
+				if(distance < minDistance){
+					minDistance = distance;
+					minDistTime = t;
+				}
+			}			
+		}
+		return minDistTime;
+	} 
+	
+	private void AttemptCollisions(Asteroid a, Asteroid b, int minDistTime){
+		// Calculate which needs to be pushed
+		Point posA = a.orbit.positionAt((long)minDistTime - a.epoch - 365);
+		Point posB = b.orbit.positionAt((long)minDistTime - b.epoch);		
+		// For now, just push "a"
+		boolean didPush = false;
+		// Create vector that draws a line from location of push to where I 
+		// want the intersection to take place
+		Point dirVector = new Point(posB.x - posA.x, posB.y - posA.y);
+		double dir = dirVector.direction();
+		Point v = a.orbit.velocityAt((long)minDistTime - a.epoch - 365);
+		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
+		double r = a.radius() + b.radius();
+		Point newPos;
+		for(int i = 0; i < 500; i++){
+			double v2 = v1 * ((1+i/100f));
+			double E = 0.5 * a.mass * v2 * v2;
+			Asteroid testAst = Asteroid.pushTest(a, minDistTime - 365, E, dir);
+			newPos = testAst.orbit.positionAt((long)minDistTime - testAst.epoch);
+			if (Point.distance(posB, newPos) < r){
+				System.out.println("Good push!");
+				Asteroid.push(a, minDistTime - 365, E, dir);
+				didPush = true;
+				break;
+			} 
+			
+		}
+		if(didPush == false){
+			System.out.println("Could not find good push!");			
+		}
+	}
+	
 }
 
 class onePush {

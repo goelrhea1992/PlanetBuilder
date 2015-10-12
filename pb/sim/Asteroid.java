@@ -95,4 +95,29 @@ public class Asteroid {
 		// return (new object of) the "same" asteroid with new orbit
 		return new Asteroid(new Orbit(r, v), asteroid.mass, time);
 	}
+	
+
+	// push asteroid to specific direction
+	public static Asteroid pushTest(Asteroid asteroid, long time,
+	                            double energy, double direction)
+	{
+		if (Double.isNaN(energy) || Double.isInfinite(energy)
+		                         || energy < 0.0)
+			throw new IllegalArgumentException("Invalid energy");
+		if (Double.isNaN(direction) || Double.isInfinite(direction))
+			throw new IllegalArgumentException("Invalid direction");
+		// find current position and velocity of asteroid
+		long t = time - asteroid.epoch;
+		Point r = asteroid.orbit.positionAt(t);
+		Point v = asteroid.orbit.velocityAt(t);
+		// translate push energy to velocity and combine
+		double magnitude = Math.sqrt(2.0 * energy / asteroid.mass);
+		v.x += magnitude * Math.cos(direction);
+		v.y += magnitude * Math.sin(direction);
+		// return (new object of) the "same" asteroid with new orbit
+		return new Asteroid(new Orbit(r, v), asteroid.mass, time);
+	}
+	
+	
+	
 }
