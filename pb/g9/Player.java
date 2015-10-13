@@ -31,62 +31,93 @@ public class Player implements pb.sim.Player {
 	private onePush bestpush;
 	private long wait_time = 0;
 
-	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b,
-			ArrayList<Long> timelist) {
+	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
-		double r = a.radius() + b.radius();
 		long period = a.orbit.period();
-		// System.out.println("period: " + period / 365.0);
 		if (period / 365.0 > 50) {
 			return intersection_list;
 		}
-		long ft = 0;
-		long t = time + ft;
-		Point p1 = new Point();
-		Point c = new Point();
-		a.orbit.positionAt(t - a.epoch, p1);
-		b.orbit.center(c);
-		Point foci = new Point(c.x * 2, c.y * 2);
-		double dist = Point.distance(p1, foci) + Point.distance(p1, foci);
-		double diff_0 = dist - b.orbit.a * 2;
-		for (; ft <= period; ft += 20) {
-			t = time + ft;
+		if (period > 3650)
+			period = 3650;
+		double r = a.radius() + b.radius();
+		for (long ft = 0 ; ft <= period ; ++ft) {
+			long t = time + wait_time + ft;
+			Point p1 = new Point();
+			Point c = new Point();
 			a.orbit.positionAt(t - a.epoch, p1);
 			b.orbit.center(c);
-			foci = new Point(c.x * 2, c.y * 2);
-			dist = Point.distance(p1, foci) + Point.distance(p1, foci);
-			double diff = dist - b.orbit.a * 2;
-			if (Math.abs(diff - diff_0) > Math.abs(diff)) {
-				for (long ft1 = ft - 20; ft1 <= ft; ft1++) {
-					long t1 = time + ft1;
+			Point foci = new Point(c.x*2,c.y*2);
+			double dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+			if (Math.abs(dist - b.orbit.a*2) < r){
+				intersection_list.add(p1);
+				timelist.add(t);
+			}
+				
+		}
+		return intersection_list;
+	}
+	
+	private ArrayList<Point> fast_find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
+		ArrayList<Point> intersection_list = new ArrayList<Point>();
+		long period = a.orbit.period();
+		if (period / 365.0 > 20) {
+			return intersection_list;
+		}
+		if (period > 3650)
+			period = 3650;
+		double r = a.radius() + b.radius();
+		Point c = new Point();
+		b.orbit.center(c);
+		Point foci = new Point(c.x*2,c.y*2);
+		long step_length = Math.round(Math.sqrt(period));
+		double[] diff = new double[3];
+		
+		long t = time + wait_time;
+		Point p1 = new Point();
+		a.orbit.positionAt(t - a.epoch, p1);
+		
+		double dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+		diff[1] = dist - b.orbit.a * 2;
+		long ft;
+		for (ft = step_length ; ft <= period ; ft+=step_length) {
+			t = time + wait_time + ft;
+			p1 = new Point();
+			a.orbit.positionAt(t - a.epoch, p1);
+			dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+			diff[2] = dist - b.orbit.a * 2;
+			if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0){
+				for(long ft1 = ft-step_length;ft1 < ft;ft1++){
+					t = time + wait_time + ft;
+					p1 = new Point();
 					a.orbit.positionAt(t - a.epoch, p1);
-					b.orbit.center(c);
-					Point foci1 = new Point(c.x * 2, c.y * 2);
-					double dist1 = Point.distance(p1, foci1)
-							+ Point.distance(p1, foci1);
-					// double diff1 = dist - b.orbit.a*2;
-					if (Math.abs(dist1 - b.orbit.a * 2) < r) {
+					dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+					if (Math.abs(dist - b.orbit.a*2) < r){
 						intersection_list.add(p1);
-						timelist.add(t1);
+						timelist.add(t);
 					}
 				}
 			}
-			diff_0 = diff;
+			diff[0] = diff[1];
+			diff[1] = diff[2];
 		}
-		for (long ft1 = ft - 20; ft1 <= period; ft1++) {
-			t = time + ft1;
-			p1 = new Point();
-			c = new Point();
-			a.orbit.positionAt(t - a.epoch, p1);
-			b.orbit.center(c);
-			foci = new Point(c.x * 2, c.y * 2);
-			dist = Point.distance(p1, foci) + Point.distance(p1, foci);
-			double diff = dist - b.orbit.a * 2;
-			if (Math.abs(dist - b.orbit.a * 2) < r) {
-				intersection_list.add(p1);
+		
+		t = time + wait_time + period;
+		p1 = new Point();
+		a.orbit.positionAt(t - a.epoch, p1);		
+		dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+		diff[2] = dist - b.orbit.a * 2;
+		if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0){
+			for(long ft1 = ft-step_length;ft1 < period;ft1++){
+				t = time + wait_time + ft;
+				p1 = new Point();
+				a.orbit.positionAt(t - a.epoch, p1);
+				dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
+				if (Math.abs(dist - b.orbit.a*2) < r){
+					intersection_list.add(p1);
+					timelist.add(t);
+				}
 			}
 		}
-		// System.out.println("period finish: " + period / 365.0);
 		return intersection_list;
 	}
 
@@ -165,8 +196,8 @@ public class Player implements pb.sim.Player {
 
 						// search for collision with any other asteroids
 						Asteroid a2 = asteroids[j];
-						ArrayList<Long> timelist = new ArrayList<Long>();
-						ArrayList<Point> intersections = find_intersection(a1,
+						HashSet<Long> timelist = new HashSet<Long>();
+						ArrayList<Point> intersections = fast_find_intersection(a1,
 								a2, timelist);
 						if (intersections.size() == 0)
 							continue;
@@ -178,6 +209,8 @@ public class Player implements pb.sim.Player {
 							long t = time + wait_time + ft;
 							if (t >= time_limit)
 								break;
+							if (!timelist.contains(t%a1.orbit.period()))
+								continue;
 							a1.orbit.positionAt(t - a1.epoch, p1);
 							a2.orbit.positionAt(t - a2.epoch, p2);
 
@@ -188,7 +221,7 @@ public class Player implements pb.sim.Player {
 									bestpush = new onePush(time + wait_time, E,
 											d2, a1.id, t, a2.id);
 									
-									CheckIncidentalCollisions(bestpush, asteroids);
+									//CheckIncidentalCollisions(bestpush, asteroids);
 								}
 								energy[i] = E;
 								direction[i] = d2;
