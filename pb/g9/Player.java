@@ -123,7 +123,15 @@ public class Player implements pb.sim.Player {
 			else
 				j = getHeaviestAsteroid(asteroids);
 
-			for (int i = 0; i != asteroids.length; ++i) {
+			// for (int i = 0; i != asteroids.length; ++i) 
+
+			// 20% of the total number of asteroids
+			int asteroidsToConsider = asteroids.length/5;
+			if (asteroidsToConsider < 1)
+				asteroidsToConsider = 1;
+
+			List<Integer> favorableAsteroids = getKHighestWeight(asteroids, asteroidsToConsider);
+			for (int i : favorableAsteroids) {
 				if (i == j)
 					continue;
 
@@ -294,8 +302,116 @@ public class Player implements pb.sim.Player {
 		}
 		return max;
 	}
+
+	private List<Integer> getKLowestWeight(Asteroid[] asteroids, int k) {
+		double[] weights = new double[asteroids.length];
+		double distance = 0.0;
+		double mass = 0.0;
+
+		for (int i = 0; i < asteroids.length; i++) {
+			Asteroid a = asteroids[i];
+			Point a_center = new Point();
+			a.orbit.positionAt(time - a.epoch, a_center);
+			distance = Double
+					.valueOf(Point.distance(a_center, new Point(0, 0)));
+			mass = asteroids[i].mass;
+			weights[i] = distance / mass;
+		}
+
+		List<Integer> lowestKIndices;
+		double[] temp = new double[k];
+		double maxWeight = Integer.MIN_VALUE;
+		int maxIndex = -1;
+		Integer[] tempIndexInWeights = new Integer[k];
+
+		// put k weights in temp, and keep track of max seen so far
+		for (int i = 0; i < k; i++) {
+			temp[i] = weights[i];
+			tempIndexInWeights[i] = i;
+			if (temp[i] > maxWeight) {
+				maxWeight = temp[i];
+				maxIndex = i;
+			}
+		}
+
+		// check remaining weights and maintain lowest k in temp
+		for (int i = k; i < weights.length; i++) {
+			if (weights[i] < maxWeight) {
+				// replace the max so far with this value
+				temp[maxIndex] = weights[i];
+				tempIndexInWeights[maxIndex] = i;
+
+				//find new max
+				maxWeight = Double.MIN_VALUE;
+				maxIndex = -1;
+
+				for (int j = 0; j< k; j++) {
+					if (temp[j] > maxWeight) {
+						maxWeight = temp[j];
+						maxIndex = j;
+					}
+				}
+			}
+		}
+		lowestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
+		return lowestKIndices;
+	}
 	
-	private int getLowestWeightAsteroid(Asteroid asteroids[]) {
+	private List<Integer> getKHighestWeight(Asteroid[] asteroids, int k) {
+		double[] weights = new double[asteroids.length];
+		double distance = 0.0;
+		double mass = 0.0;
+
+		for (int i = 0; i < asteroids.length; i++) {
+			Asteroid a = asteroids[i];
+			Point a_center = new Point();
+			a.orbit.positionAt(time - a.epoch, a_center);
+			distance = Double
+					.valueOf(Point.distance(a_center, new Point(0, 0)));
+			mass = asteroids[i].mass;
+			weights[i] = distance / mass;
+		}
+
+		List<Integer> highestKIndices;
+		double[] temp = new double[k];
+		double minWeight = Integer.MAX_VALUE;
+		int minIndex = -1;
+		Integer[] tempIndexInWeights = new Integer[k];
+
+		// put k weights in temp, and keep track of max seen so far
+		for (int i = 0; i < k; i++) {
+			temp[i] = weights[i];
+			tempIndexInWeights[i] = i;
+			if (temp[i] < minWeight) {
+				minWeight = temp[i];
+				minIndex = i;
+			}
+		}
+
+		// check remaining weights and maintain lowest k in temp
+		for (int i = k; i < weights.length; i++) {
+			if (weights[i] > minWeight) {
+				// replace the max so far with this value
+				temp[minIndex] = weights[i];
+				tempIndexInWeights[minIndex] = i;
+
+				//find new max
+				minWeight = Double.MAX_VALUE;
+				minIndex = -1;
+
+				for (int j = 0; j< k; j++) {
+					if (temp[j] < minWeight) {
+						minWeight = temp[j];
+						minIndex = j;
+					}
+				}
+			}
+		}
+		highestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
+		return highestKIndices;
+	}
+
+	private int getLowestWeightAsteroid(Asteroid[] asteroids) {
 		/** 
 		* Returns the index of the asteroid with the minimum distance to mass ratio.
 		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
