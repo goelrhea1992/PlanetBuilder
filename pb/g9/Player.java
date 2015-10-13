@@ -1,4 +1,4 @@
-﻿package pb.g9;
+package pb.g9;
 
 import pb.sim.Point;
 import pb.sim.Orbit;
@@ -201,36 +201,31 @@ public class Player implements pb.sim.Player {
 	}
 
 	private int getHeaviestAsteroid(Asteroid asteroids[]) {
-
-		int min = 0;
-		double distance = 0.0;
+		int max = 0;
 		double mass = 0.0;
-		double weight = 0.0;
-		double minWeight = 0.0;
+		double maxMass = Double.MIN_VALUE;
 
 		for (int i = 0; i < asteroids.length; i++) {
-
-			Asteroid a = asteroids[i];
-			Point a_center = new Point();
-			a.orbit.positionAt(time - a.epoch, a_center);
-			distance = Double
-					.valueOf(Point.distance(a_center, new Point(0, 0)));
 			mass = asteroids[i].mass;
-			weight = mass;
-			if (weight > minWeight) {
-				min = i;
-				minWeight = weight;
+			if (mass > maxMass) {
+				max = i;
+				maxMass = mass;
 			}
 		}
-		return min;
+		return max;
 	}
 
 	private int getHighestWeightAsteroid(Asteroid asteroids[]) {
+		/** 
+		* Returns the index of the asteroid with the maximum distance to mass ratio.
+		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
+		**/
+
 		int max = 0;
 		double distance = 0.0;
 		double mass = 0.0;
 		double weight = 0.0;
-		double maxWeight = 0.0;
+		double maxWeight = Double.MIN_VALUE;
 
 		for (int i = 0; i < asteroids.length; i++) {
 
@@ -249,26 +244,56 @@ public class Player implements pb.sim.Player {
 		return max;
 	}
 	
-	private int GetMinDistanceTime(Asteroid a, Asteroid  b){
+	private int getLowestWeightAsteroid(Asteroid asteroids[]) {
+		/** 
+		* Returns the index of the asteroid with the minimum distance to mass ratio.
+		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
+		* 
+		* Hence, it is not good to push the one with the lowest distance to mass ratio.
+		* because it is too close to the sun, and too heavy.
+		**/
+
+		int min = 0;
+		double distance = 0.0;
+		double mass = 0.0;
+		double weight = 0.0;
+		double minWeight = Double.MAX_VALUE;
+
+		for (int i = 0; i < asteroids.length; i++) {
+
+			Asteroid a = asteroids[i];
+			Point a_center = new Point();
+			a.orbit.positionAt(time - a.epoch, a_center);
+			distance = Double
+					.valueOf(Point.distance(a_center, new Point(0, 0)));
+			mass = asteroids[i].mass;
+			weight = distance / mass;
+			if (weight < minWeight) {
+				min = i;
+				minWeight = weight;
+			}
+		}
+		return min;
+	}
+
+	private int getMinDistanceTime(Asteroid a, Asteroid  b) {
+		/**
+		* Returns the time at which the Euclidean distance between asteroids is minimized.
+		**/
+
 		double minDistance = -1;
-		int minDistTime = -1;
+		int minDistTime = Integer.MAX_VALUE;
 		for(int t = 0; t < 20*365; t++){
 			double distance = Point.distance(a.orbit.positionAt((long)t - a.epoch),b.orbit.positionAt((long)t - b.epoch));
-			if(minDistance == -1){
+			if(distance < minDistance){
 				minDistance = distance;
 				minDistTime = t;
-			}
-			else{
-				if(distance < minDistance){
-					minDistance = distance;
-					minDistTime = t;
-				}
 			}			
 		}
 		return minDistTime;
 	} 
 	
-	private void AttemptCollisions(Asteroid a, Asteroid b, int minDistTime){
+	private void attemptCollisions(Asteroid a, Asteroid b, int minDistTime){
 		// Calculate which needs to be pushed
 		Point posA = a.orbit.positionAt((long)minDistTime - a.epoch - 365);
 		Point posB = b.orbit.positionAt((long)minDistTime - b.epoch);		
@@ -303,10 +328,20 @@ public class Player implements pb.sim.Player {
 }
 
 class onePush {
+
+	// the time the push is made
 	long time;
+
+	// energy used to make the push
 	double energy;
+
+	// the direction of the push
 	double direction;
+
+	// the index of the asteroid to be pushed
 	int index;
+
+	// the time at which the push will cause a collision
 	long collision_time;
 
 	public onePush(long time, double energy, double direction, int index,
