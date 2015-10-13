@@ -165,8 +165,8 @@ public class Player implements pb.sim.Player {
 
 			// for (int i = 0; i != asteroids.length; ++i) 
 
-			// 20% of the total number of asteroids
-			int asteroidsToConsider = asteroids.length/5;
+			// 10% of the total number of asteroids
+			int asteroidsToConsider = asteroids.length/10;
 			if (asteroidsToConsider < 1)
 				asteroidsToConsider = 1;
 
