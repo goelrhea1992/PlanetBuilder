@@ -10,7 +10,7 @@ import java.util.*;
 public class Player implements pb.sim.Player {
 
 	// iteration number
-	int iteration = 1;
+	int iteration = 0;
 
 	// used to pick asteroid and velocity boost randomly
 	private Random random = new Random();
@@ -31,93 +31,62 @@ public class Player implements pb.sim.Player {
 	private onePush bestpush;
 	private long wait_time = 0;
 
-	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
+	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b,
+			ArrayList<Long> timelist) {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
+		double r = a.radius() + b.radius();
 		long period = a.orbit.period();
+		// System.out.println("period: " + period / 365.0);
 		if (period / 365.0 > 50) {
 			return intersection_list;
 		}
-		if (period > 3650)
-			period = 3650;
-		double r = a.radius() + b.radius();
-		for (long ft = 0 ; ft <= period ; ++ft) {
-			long t = time + wait_time + ft;
-			Point p1 = new Point();
-			Point c = new Point();
+		long ft = 0;
+		long t = time + ft;
+		Point p1 = new Point();
+		Point c = new Point();
+		a.orbit.positionAt(t - a.epoch, p1);
+		b.orbit.center(c);
+		Point foci = new Point(c.x * 2, c.y * 2);
+		double dist = Point.distance(p1, foci) + Point.distance(p1, foci);
+		double diff_0 = dist - b.orbit.a * 2;
+		for (; ft <= period; ft += 20) {
+			t = time + ft;
 			a.orbit.positionAt(t - a.epoch, p1);
 			b.orbit.center(c);
-			Point foci = new Point(c.x*2,c.y*2);
-			double dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-			if (Math.abs(dist - b.orbit.a*2) < r){
-				intersection_list.add(p1);
-				timelist.add(t);
-			}
-				
-		}
-		return intersection_list;
-	}
-	
-	private ArrayList<Point> fast_find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
-		ArrayList<Point> intersection_list = new ArrayList<Point>();
-		long period = a.orbit.period();
-		if (period / 365.0 > 20) {
-			return intersection_list;
-		}
-		if (period > 3650)
-			period = 3650;
-		double r = a.radius() + b.radius();
-		Point c = new Point();
-		b.orbit.center(c);
-		Point foci = new Point(c.x*2,c.y*2);
-		long step_length = Math.round(Math.sqrt(period));
-		double[] diff = new double[3];
-		
-		long t = time + wait_time;
-		Point p1 = new Point();
-		a.orbit.positionAt(t - a.epoch, p1);
-		
-		double dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-		diff[1] = dist - b.orbit.a * 2;
-		long ft;
-		for (ft = step_length ; ft <= period ; ft+=step_length) {
-			t = time + wait_time + ft;
-			p1 = new Point();
-			a.orbit.positionAt(t - a.epoch, p1);
-			dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-			diff[2] = dist - b.orbit.a * 2;
-			if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0){
-				for(long ft1 = ft-step_length;ft1 < ft;ft1++){
-					t = time + wait_time + ft;
-					p1 = new Point();
+			foci = new Point(c.x * 2, c.y * 2);
+			dist = Point.distance(p1, foci) + Point.distance(p1, foci);
+			double diff = dist - b.orbit.a * 2;
+			if (Math.abs(diff - diff_0) > Math.abs(diff)) {
+				for (long ft1 = ft - 20; ft1 <= ft; ft1++) {
+					long t1 = time + ft1;
 					a.orbit.positionAt(t - a.epoch, p1);
-					dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-					if (Math.abs(dist - b.orbit.a*2) < r){
+					b.orbit.center(c);
+					Point foci1 = new Point(c.x * 2, c.y * 2);
+					double dist1 = Point.distance(p1, foci1)
+							+ Point.distance(p1, foci1);
+					// double diff1 = dist - b.orbit.a*2;
+					if (Math.abs(dist1 - b.orbit.a * 2) < r) {
 						intersection_list.add(p1);
-						timelist.add(t);
+						timelist.add(t1);
 					}
 				}
 			}
-			diff[0] = diff[1];
-			diff[1] = diff[2];
+			diff_0 = diff;
 		}
-		
-		t = time + wait_time + period;
-		p1 = new Point();
-		a.orbit.positionAt(t - a.epoch, p1);		
-		dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-		diff[2] = dist - b.orbit.a * 2;
-		if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0){
-			for(long ft1 = ft-step_length;ft1 < period;ft1++){
-				t = time + wait_time + ft;
-				p1 = new Point();
-				a.orbit.positionAt(t - a.epoch, p1);
-				dist = Point.distance(p1,foci)+Point.distance(p1,new Point(0,0));
-				if (Math.abs(dist - b.orbit.a*2) < r){
-					intersection_list.add(p1);
-					timelist.add(t);
-				}
+		for (long ft1 = ft - 20; ft1 <= period; ft1++) {
+			t = time + ft1;
+			p1 = new Point();
+			c = new Point();
+			a.orbit.positionAt(t - a.epoch, p1);
+			b.orbit.center(c);
+			foci = new Point(c.x * 2, c.y * 2);
+			dist = Point.distance(p1, foci) + Point.distance(p1, foci);
+			double diff = dist - b.orbit.a * 2;
+			if (Math.abs(dist - b.orbit.a * 2) < r) {
+				intersection_list.add(p1);
 			}
 		}
+		// System.out.println("period finish: " + period / 365.0);
 		return intersection_list;
 	}
 
@@ -127,27 +96,16 @@ public class Player implements pb.sim.Player {
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
 		this.time_limit = time_limit;
-		bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
+		bestpush = new onePush(0, Double.MAX_VALUE, 0, 0, 0, 0);
 	}
 
 	// try to push asteroid
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
-		time++;
-		// if (time == bestpush.time){
-		// 	int i = bestpush.i;
-		// 	energy[i] = bestpush.energy;
-		// 	direction[i] = bestpush.direction;
+		iteration++;
 
-		// 	 // do not push again until collision happens
-		// 	time_of_push = bestpush.collision_time + 1;
-		// 	bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
-		// 	iteration++;
-
-		// 	return;
-		// }
 		// if not yet time to push do nothing
-		if (time <= time_of_push)
+		if (++time <= time_of_push)
 			return;
 		System.out.println("Year: " + (1 + time / 365));
 		System.out.println("Day: " + (1 + time % 365));
@@ -167,8 +125,8 @@ public class Player implements pb.sim.Player {
 
 			// for (int i = 0; i != asteroids.length; ++i) 
 
-			// 10% of the total number of asteroids
-			int asteroidsToConsider = asteroids.length/10;
+			// 20% of the total number of asteroids
+			int asteroidsToConsider = asteroids.length/5;
 			if (asteroidsToConsider < 1)
 				asteroidsToConsider = 1;
 
@@ -181,7 +139,7 @@ public class Player implements pb.sim.Player {
 						- asteroids[i].epoch);
 				// add 5-50% of current velocity in magnitude
 				double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
-				for (double k = 0.05; k < 0.9; k = k + 0.05) {
+				for (double k = 0.05; k < 0.9; k = k + 0.1) {
 					for (double k2 = 0; k2 < 5; k2 = k2 + 0.1) {
 						double v2 = v1 * k;
 						//System.out.println("  Speed: " + v1 + " +/- " + v2);
@@ -215,8 +173,8 @@ public class Player implements pb.sim.Player {
 
 						// search for collision with any other asteroids
 						Asteroid a2 = asteroids[j];
-						HashSet<Long> timelist = new HashSet<Long>();
-						ArrayList<Point> intersections = fast_find_intersection(a1,
+						ArrayList<Long> timelist = new ArrayList<Long>();
+						ArrayList<Point> intersections = find_intersection(a1,
 								a2, timelist);
 						if (intersections.size() == 0)
 							continue;
@@ -228,8 +186,6 @@ public class Player implements pb.sim.Player {
 							long t = time + wait_time + ft;
 							if (t >= time_limit)
 								break;
-							if (!timelist.contains(t%a1.orbit.period()))
-								continue;
 							a1.orbit.positionAt(t - a1.epoch, p1);
 							a2.orbit.positionAt(t - a2.epoch, p2);
 
@@ -238,18 +194,20 @@ public class Player implements pb.sim.Player {
 
 								if (E < bestpush.energy) {
 									bestpush = new onePush(time + wait_time, E,
-											d2, i, a1.id, t, a2.id);
+											d2, a1.id, t, a2.id);
 									
-									//CheckIncidentalCollisions(bestpush, asteroids);
+									CheckIncidentalCollisions(bestpush, asteroids);
 								}
 								energy[i] = E;
 								direction[i] = d2;
 
-								// // do not push again until collision happens
+								// do not push again until collision happens
 								time_of_push = t + 1;
 								System.out.println("  Collision prediction !");
 								System.out.println("  Year: " + (1 + t / 365));
 								System.out.println("  Day: " + (1 + t % 365));
+
+								return;
 							}
 						}
 					}
@@ -605,22 +563,18 @@ class onePush {
 
 	// the time at which the push will cause a collision
 	long collision_time;
-	
-	// index of the asteroid to push in the array asteroids[]
-	int i;
-	
+
 	// id of the asteroid to push
 	long asteroidPushId;
 	
 	// id of the asteroid to push towards
     long asteroidCollidedId;
 	
-	public onePush(long time, double energy, double direction, int i, long pushId,
+	public onePush(long time, double energy, double direction, long pushId,
 			long collision_time, long collidedId) {
 		this.time = time;
 		this.energy = energy;
 		this.direction = direction;
-		this.i = i;
 		this.asteroidPushId = pushId;
 		this.collision_time = collision_time;
 		this.asteroidCollidedId = collidedId;
