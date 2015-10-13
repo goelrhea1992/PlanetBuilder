@@ -29,7 +29,7 @@ public class Player implements pb.sim.Player {
 	private Point origin = new Point(0, 0);
 
 	private onePush bestpush;
-	private long wait_time = 0;
+	private long wait_time = 350;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
@@ -127,16 +127,25 @@ public class Player implements pb.sim.Player {
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
 		this.time_limit = time_limit;
-		bestpush = new onePush(0, Double.MAX_VALUE, 0, 0, 0, 0);
+		bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
 	}
 
 	// try to push asteroid
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
-		iteration++;
+		time++;
+		if (time == bestpush.time){
+			int i = bestpush.i;
+			energy[i] = bestpush.energy;
+			direction[i] = bestpush.direction;
 
+			 // do not push again until collision happens
+			time_of_push = bestpush.collision_time + 1;
+			bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
+			return;
+		}
 		// if not yet time to push do nothing
-		if (++time <= time_of_push)
+		if (time <= time_of_push)
 			return;
 		System.out.println("Year: " + (1 + time / 365));
 		System.out.println("Day: " + (1 + time % 365));
@@ -162,7 +171,7 @@ public class Player implements pb.sim.Player {
 						- asteroids[i].epoch);
 				// add 5-50% of current velocity in magnitude
 				double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
-				for (double k = 0.05; k < 0.9; k = k + 0.1) {
+				for (double k = 0.05; k < 0.9; k = k + 0.05) {
 					for (double k2 = 0; k2 < 5; k2 = k2 + 0.1) {
 						double v2 = v1 * k;
 						//System.out.println("  Speed: " + v1 + " +/- " + v2);
@@ -219,20 +228,18 @@ public class Player implements pb.sim.Player {
 
 								if (E < bestpush.energy) {
 									bestpush = new onePush(time + wait_time, E,
-											d2, a1.id, t, a2.id);
+											d2, i, a1.id, t, a2.id);
 									
 									//CheckIncidentalCollisions(bestpush, asteroids);
 								}
-								energy[i] = E;
-								direction[i] = d2;
+								//energy[i] = E;
+								//direction[i] = d2;
 
-								// do not push again until collision happens
-								time_of_push = t + 1;
+								// // do not push again until collision happens
+								//time_of_push = t + 1;
 								System.out.println("  Collision prediction !");
 								System.out.println("  Year: " + (1 + t / 365));
 								System.out.println("  Day: " + (1 + t % 365));
-
-								return;
 							}
 						}
 					}
@@ -480,18 +487,22 @@ class onePush {
 
 	// the time at which the push will cause a collision
 	long collision_time;
-
+	
+	// index of the asteroid to push in the array asteroids[]
+	int i;
+	
 	// id of the asteroid to push
 	long asteroidPushId;
 	
 	// id of the asteroid to push towards
     long asteroidCollidedId;
 	
-	public onePush(long time, double energy, double direction, long pushId,
+	public onePush(long time, double energy, double direction, int i, long pushId,
 			long collision_time, long collidedId) {
 		this.time = time;
 		this.energy = energy;
 		this.direction = direction;
+		this.i = i;
 		this.asteroidPushId = pushId;
 		this.collision_time = collision_time;
 		this.asteroidCollidedId = collidedId;
