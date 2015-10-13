@@ -10,7 +10,7 @@ import java.util.*;
 public class Player implements pb.sim.Player {
 
 	// iteration number
-	int iteration = 1;
+	int iteration = 0;
 
 	// used to pick asteroid and velocity boost randomly
 	private Random random = new Random();
@@ -102,6 +102,8 @@ public class Player implements pb.sim.Player {
 	// try to push asteroid
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
+		iteration++;
+
 		// if not yet time to push do nothing
 		if (++time <= time_of_push)
 			return;
@@ -113,7 +115,13 @@ public class Player implements pb.sim.Player {
 
 			System.out.println("Try: " + retry + " / " + retries_per_turn);
 
-			int j = getHeaviestAsteroid(asteroids);
+			int j;
+			if (iteration == 1) {
+				List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
+				j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+			}
+			else
+				j = getHeaviestAsteroid(asteroids);
 
 			for (int i = 0; i != asteroids.length; ++i) {
 				if (i == j)
@@ -200,6 +208,47 @@ public class Player implements pb.sim.Player {
 			}
 		}
 		time_of_push = time + turns_per_retry;
+	}
+
+	private List<Integer> findMiddleOrbits(Asteroid[] asteroids) {
+		Map<Double, Integer> radiusToIndexUnsorted = new HashMap<Double, Integer>();
+
+		for (int i = 0; i < asteroids.length; i++) {
+			radiusToIndexUnsorted.put(asteroids[i].radius(), i);
+		}
+
+		Map<Double, Integer> radiusToIndex = new TreeMap<Double, Integer>(radiusToIndexUnsorted);
+
+		int i = 0;
+		int n = asteroids.length;
+		Iterator<Map.Entry<Double, Integer>> iter = radiusToIndex.entrySet().iterator();
+		List<Integer> desiredOrbits = new ArrayList<Integer>();
+		while (i < (n/2) - (n/10)) {
+			if (iter.hasNext())
+				iter.next();
+			i++;
+		}
+		while (i <= (n/2) + (n/10)) {
+			if (iter.hasNext())
+				desiredOrbits.add(iter.next().getValue());
+			i++;
+		}
+		return desiredOrbits;
+	}
+
+	private int getHeaviestAsteroidAmong(Asteroid asteroids[], List<Integer> desiredOrbits) {
+		int max = 0;
+		double mass = 0.0;
+		double maxMass = Double.MIN_VALUE;
+
+		for (int i: desiredOrbits) {
+			mass = asteroids[i].mass;
+			if (mass > maxMass) {
+				max = i;
+				maxMass = mass;
+			}
+		}
+		return max;
 	}
 
 	private int getHeaviestAsteroid(Asteroid asteroids[]) {
