@@ -96,7 +96,7 @@ public class Player implements pb.sim.Player {
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
 		this.time_limit = time_limit;
-		bestpush = new onePush(0, Double.MAX_VALUE, 0, 0, 0);
+		bestpush = new onePush(0, Double.MAX_VALUE, 0, 0, 0, 0);
 	}
 
 	// try to push asteroid
@@ -178,7 +178,9 @@ public class Player implements pb.sim.Player {
 
 								if (E < bestpush.energy) {
 									bestpush = new onePush(time + wait_time, E,
-											d2, i, t);
+											d2, a1.id, t, a2.id);
+									
+									CheckIncidentalCollisions(bestpush, asteroids);
 								}
 								energy[i] = E;
 								direction[i] = d2;
@@ -285,7 +287,7 @@ public class Player implements pb.sim.Player {
 		for(int i = 0; i < 500; i++){
 			double v2 = v1 * ((1+i/100f));
 			double E = 0.5 * a.mass * v2 * v2;
-			Asteroid testAst = Asteroid.pushTest(a, minDistTime - 365, E, dir);
+			Asteroid testAst = pushTest(a, minDistTime - 365, E, dir);
 			newPos = testAst.orbit.positionAt((long)minDistTime - testAst.epoch);
 			if (Point.distance(posB, newPos) < r){
 				System.out.println("Good push!");
@@ -300,21 +302,80 @@ public class Player implements pb.sim.Player {
 		}
 	}
 	
+	private boolean CheckIncidentalCollisions(onePush push, Asteroid[] asteroids){
+		Asteroid pushAst = null;
+		for(int i = 0; i < asteroids.length; i++){
+			if(asteroids[i].id == push.asteroidPushId){
+				pushAst = asteroids[i];
+				break;
+			}
+		}
+		if(pushAst == null){
+			System.out.println("ERRROR");
+		}
+		Asteroid newAst = pushTest(pushAst, push.time, push.energy,
+				push.direction);
+		
+		Point newAstPos;
+		Point otherAstPos;
+		double r;
+		for(long t = push.time; t< push.collision_time; t++){
+			newAstPos = newAst.orbit.positionAt(t);
+			for(int j = 0; j<asteroids.length; j++){
+				if(asteroids[j].id != push.asteroidPushId && asteroids[j].id != push.asteroidCollidedId){					
+					otherAstPos = asteroids[j].orbit.positionAt(t);
+					r = newAst.radius() + asteroids[j].radius();
+					if(Point.distance(newAstPos, otherAstPos) < r){
+						System.out.println("Bad Push: Incidental Collision Detected with Asteroid "+j);
+						return false;
+					}
+					
+				}
+				
+			}
+		}
+		return true;
+		
+	}
+	public static Asteroid pushTest(Asteroid asteroid, long time,
+            double energy, double direction)
+	{
+		if (Double.isNaN(energy) || Double.isInfinite(energy)
+		             || energy < 0.0)
+		throw new IllegalArgumentException("Invalid energy");
+		if (Double.isNaN(direction) || Double.isInfinite(direction))
+		throw new IllegalArgumentException("Invalid direction");
+		// find current position and velocity of asteroid
+		long t = time - asteroid.epoch;
+		Point r = asteroid.orbit.positionAt(t);
+		Point v = asteroid.orbit.velocityAt(t);
+		// translate push energy to velocity and combine
+		double magnitude = Math.sqrt(2.0 * energy / asteroid.mass);
+		v.x += magnitude * Math.cos(direction);
+		v.y += magnitude * Math.sin(direction);
+		// return (new object of) the "same" asteroid with new orbit
+		return new Asteroid(new Orbit(r, v), asteroid.mass, time);
+	}
+
+	
 }
 
 class onePush {
 	long time;
 	double energy;
 	double direction;
-	int index;
+	long asteroidPushId;
 	long collision_time;
-
-	public onePush(long time, double energy, double direction, int index,
-			long collision_time) {
+    long asteroidCollidedId;
+	
+	public onePush(long time, double energy, double direction, long pushId,
+			long collision_time, long collidedId) {
 		this.time = time;
 		this.energy = energy;
 		this.direction = direction;
-		this.index = index;
+		this.asteroidPushId = pushId;
 		this.collision_time = collision_time;
+		this.asteroidCollidedId = collidedId;
+		
 	}
 }
