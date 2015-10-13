@@ -10,7 +10,7 @@ import java.util.*;
 public class Player implements pb.sim.Player {
 
 	// iteration number
-	int iteration = 0;
+	int iteration = 1;
 
 	// used to pick asteroid and velocity boost randomly
 	private Random random = new Random();
@@ -29,7 +29,7 @@ public class Player implements pb.sim.Player {
 	private Point origin = new Point(0, 0);
 
 	private onePush bestpush;
-	private long wait_time = 350;
+	private long wait_time = 0;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
@@ -134,16 +134,18 @@ public class Player implements pb.sim.Player {
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
 		time++;
-		if (time == bestpush.time){
-			int i = bestpush.i;
-			energy[i] = bestpush.energy;
-			direction[i] = bestpush.direction;
+		// if (time == bestpush.time){
+		// 	int i = bestpush.i;
+		// 	energy[i] = bestpush.energy;
+		// 	direction[i] = bestpush.direction;
 
-			 // do not push again until collision happens
-			time_of_push = bestpush.collision_time + 1;
-			bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
-			return;
-		}
+		// 	 // do not push again until collision happens
+		// 	time_of_push = bestpush.collision_time + 1;
+		// 	bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
+		// 	iteration++;
+
+		// 	return;
+		// }
 		// if not yet time to push do nothing
 		if (time <= time_of_push)
 			return;
@@ -240,11 +242,11 @@ public class Player implements pb.sim.Player {
 									
 									//CheckIncidentalCollisions(bestpush, asteroids);
 								}
-								//energy[i] = E;
-								//direction[i] = d2;
+								energy[i] = E;
+								direction[i] = d2;
 
 								// // do not push again until collision happens
-								//time_of_push = t + 1;
+								time_of_push = t + 1;
 								System.out.println("  Collision prediction !");
 								System.out.println("  Year: " + (1 + t / 365));
 								System.out.println("  Day: " + (1 + t % 365));
