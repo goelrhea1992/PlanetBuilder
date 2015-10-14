@@ -573,14 +573,14 @@ public class Player implements pb.sim.Player {
 		
 		Point newAstPos;
 		Point otherAstPos;
-		double r;
+/*		double r;
 		for(long t = push.time; t< push.collision_time; t++){
 			newAstPos = newAst.orbit.positionAt(t);
 			for(int j = 0; j<asteroids.length; j++){
 				if(asteroids[j].id != push.asteroidPushId && asteroids[j].id != push.asteroidCollidedId){					
 					otherAstPos = asteroids[j].orbit.positionAt(t);
 					r = newAst.radius() + asteroids[j].radius();
-					if(Point.distance(newAstPos, otherAstPos) < r){
+					if(Point.distance(newAstPos, otherAstPos) <= r){
 						System.out.println("Bad Push: Incidental Collision Detected with Asteroid "+j);
 						return false;
 					}
@@ -589,6 +589,23 @@ public class Player implements pb.sim.Player {
 				
 			}
 		}
+		*/
+		for(int i = 0; i < asteroids.length; i++){
+			long pushTime = push.time;
+			if(asteroids[i].id == newAst.id || asteroids[i].id == push.asteroidCollidedId){
+				continue;
+			}
+			while(pushTime <= push.collision_time){
+				newAstPos   = newAst.orbit.positionAt(pushTime) ;
+				otherAstPos = asteroids[i].orbit.positionAt(pushTime); 
+				if(Point.distance(newAstPos , otherAstPos) <= newAst.radius() + asteroids[i].radius()){
+					System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
+					return false;
+				}
+				pushTime++;
+			}
+		}
+		
 		return true;
 		
 	}
