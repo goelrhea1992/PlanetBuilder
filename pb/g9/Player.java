@@ -24,12 +24,14 @@ public class Player implements pb.sim.Player {
 
 	// number of retries
 	private int retries_per_turn = 1;
-	private int turns_per_retry = 3;
+	private int turns_per_retry = 0;
 
 	private Point origin = new Point(0, 0);
 
 	private onePush bestpush;
-	private long wait_time = 50;
+	private long wait_time = 100;
+	private double average_energy = Double.MAX_VALUE/20.0;
+	private int push_times = 0;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
@@ -64,7 +66,7 @@ public class Player implements pb.sim.Player {
 		if (period / 365.0 > 20) {
 			return intersection_list;
 		}
-		System.out.println("  fast_find_intersection begin !");
+		//System.out.println("  fast_find_intersection begin !");
 		if (period > 3650)
 			period = 3650;
 		double r = a.radius() + b.radius();
@@ -89,7 +91,7 @@ public class Player implements pb.sim.Player {
 			diff[2] = dist - b.orbit.a * 2;
 			if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0){
 				for(long ft1 = ft-step_length;ft1 < ft;ft1++){
-					System.out.print(ft1+" ("+ft+") ");
+					//System.out.print(ft1+" ("+ft+") ");
 					t = time + wait_time + ft1;
 					p1 = new Point();
 					a.orbit.positionAt(t - a.epoch, p1);
@@ -105,7 +107,7 @@ public class Player implements pb.sim.Player {
 			diff[1] = diff[2];
 		}
 
-		System.out.println("  fast_find_intersection mid !");
+		//System.out.println("  fast_find_intersection mid !");
 		t = time + wait_time + period;
 		p1 = new Point();
 		a.orbit.positionAt(t - a.epoch, p1);		
@@ -123,7 +125,7 @@ public class Player implements pb.sim.Player {
 				}
 			}
 		}
-		System.out.println("  fast_find_intersection end !");
+		//System.out.println("  fast_find_intersection end !");
 		return intersection_list;
 	}
 
@@ -140,7 +142,9 @@ public class Player implements pb.sim.Player {
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
 		time++;
-		if (time == bestpush.time){
+		if (time == bestpush.time && bestpush.energy< 5 * average_energy){
+			push_times++;
+			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -149,19 +153,19 @@ public class Player implements pb.sim.Player {
 		 	time_of_push = bestpush.collision_time + 1;
 		 	bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
 		 	iteration++;
-
+		 	System.out.println("average energy: "+ average_energy);
 		 	return;
 		}
 		// if not yet time to push do nothing
 		if (time <= time_of_push)
 			return;
-		System.out.println("Year: " + (1 + time / 365));
-		System.out.println("Day: " + (1 + time % 365));
+		//System.out.println("Year: " + (1 + time / 365));
+		//System.out.println("Day: " + (1 + time % 365));
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
 			// pick a random asteroid and get its velocity
 			// int i = random.nextInt(asteroids.length);
 
-			System.out.println("Try: " + retry + " / " + retries_per_turn);
+			//System.out.println("Try: " + retry + " / " + retries_per_turn);
 
 			int j;
 			if (iteration == 1) {
@@ -252,10 +256,11 @@ public class Player implements pb.sim.Player {
 
 								onePush push = new onePush(time + wait_time, E,
 										d2, i, a1.id, t, a2.id);
+									
 								if (E < bestpush.energy) {
-									if (CheckIncidentalCollisions(push, asteroids)){
+								//	if (CheckIncidentalCollisions(push, asteroids)){
 										bestpush = push;
-									}
+								//	}
 								}
 //								energy[i] = E;
 //								direction[i] = d2;
@@ -263,9 +268,9 @@ public class Player implements pb.sim.Player {
 //								// do not push again until collision happens
 //								time_of_push = t + 1;
 //								iteration++;
-								System.out.println("  Collision prediction !");
-								System.out.println("  Year: " + (1 + t / 365));
-								System.out.println("  Day: " + (1 + t % 365));
+//								System.out.println("  Collision prediction !");
+//								System.out.println("  Year: " + (1 + t / 365));
+//								System.out.println("  Day: " + (1 + t % 365));
 
 //								return;
 							}
