@@ -143,6 +143,7 @@ public class Player implements pb.sim.Player {
 
 		time++;
 		if (time == bestpush.time && bestpush.energy< 5 * average_energy){
+			System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 		 	int i = bestpush.i;
@@ -178,11 +179,19 @@ public class Player implements pb.sim.Player {
 			// for (int i = 0; i != asteroids.length; ++i) 
 
 			// 10% of the total number of asteroids
-			int asteroidsToConsider = asteroids.length/10;
+			int asteroidsToConsider;
+			if (asteroids.length < 10)
+				// if fewer than 10 asteroids, consider all.
+				asteroidsToConsider = asteroids.length;
+			else
+				// if more than 10 asteorids, consider 20%
+				asteroidsToConsider = asteroids.length/5;
+
+			// if you get 0 asteroids to condier, consider at least 1
 			if (asteroidsToConsider < 1)
 				asteroidsToConsider = 1;
 
-			List<Integer> favorableAsteroids = getKHighestWeight(asteroids, asteroidsToConsider);
+			List<Integer> favorableAsteroids = getKHighestWeight(asteroids, asteroidsToConsider, asteroids[j]);
 			for (int i : favorableAsteroids) {
 				if (i == j)
 					continue;
@@ -191,6 +200,15 @@ public class Player implements pb.sim.Player {
 						- asteroids[i].epoch);
 				// add 5-50% of current velocity in magnitude
 				double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
+
+				double d1 = Math.atan2(v.y, v.x);
+				double d2;
+				if (asteroids[j].orbit.a < asteroids[i].orbit.a)
+					//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
+					d2 = Math.PI + d1;
+				else
+					//d2 = d1 + (k2 - 0.5) * Math.PI * 0.25;
+					d2 = d1;
 
 //				double E_i= Orbit.GM/(2*asteroids[i].orbit.a);
 //				double E_j= Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a);
@@ -201,14 +219,7 @@ public class Player implements pb.sim.Player {
 						//System.out.println("  Speed: " + v1 + " +/- " + v2);
 
 						// apply push at -/8 to /8 of current angle
-						double d1 = Math.atan2(v.y, v.x);
-						double d2;
-						if (asteroids[j].orbit.a < asteroids[i].orbit.a)
-							//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
-							d2 = Math.PI + d1;
-						else
-							//d2 = d1 + (k2 - 0.5) * Math.PI * 0.25;
-							d2 = d1;
+						
 						//System.out.println("  Angle: " + d1 + " -> " + d2);
 
 						// compute energy
@@ -221,7 +232,7 @@ public class Player implements pb.sim.Player {
 							a1 = Asteroid.push(asteroids[i], time + wait_time
 									- asteroids[i].epoch, E, d2);
 						} catch (InvalidOrbitException e) {
-//							System.out.println("  Invalid orbit: "
+							//System.out.println("  Invalid orbit: ");
 //							+ e.getMessage());
 							continue;
 						}
@@ -262,13 +273,14 @@ public class Player implements pb.sim.Player {
 										bestpush = push;
 								//	}
 								}
+
 //								energy[i] = E;
 //								direction[i] = d2;
 //
 //								// do not push again until collision happens
 //								time_of_push = t + 1;
 //								iteration++;
-//								System.out.println("  Collision prediction !");
+								// System.out.println("  Collision prediction !");
 //								System.out.println("  Year: " + (1 + t / 365));
 //								System.out.println("  Day: " + (1 + t % 365));
 
@@ -422,17 +434,22 @@ public class Player implements pb.sim.Player {
 		return lowestKIndices;
 	}
 	
-	private List<Integer> getKHighestWeight(Asteroid[] asteroids, int k) {
+	private List<Integer> getKHighestWeight(Asteroid[] asteroids, int k, Asteroid target) {
 		double[] weights = new double[asteroids.length];
 		double distance = 0.0;
+		double distanceToTarget = 0.0;
 		double mass = 0.0;
 
 		for (int i = 0; i < asteroids.length; i++) {
 			Asteroid a = asteroids[i];
 			Point a_center = new Point();
 			a.orbit.positionAt(time - a.epoch, a_center);
+			Point target_center = new Point();
+			target.orbit.positionAt(time - target.epoch, target_center);
 			distance = Double
 					.valueOf(Point.distance(a_center, new Point(0, 0)));
+			distanceToTarget = Double
+					.valueOf(Point.distance(a_center, target_center));
 			mass = asteroids[i].mass;
 			weights[i] = distance / mass;
 		}
