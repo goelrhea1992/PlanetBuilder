@@ -278,7 +278,7 @@ public class Player implements pb.sim.Player {
 										d2, i, a1.id, t, a2.id);
 									
 								if (E < bestpush.energy) {
-									if (CheckIncidentalCollisions(push, asteroids)){
+									if (CheckIncidentalCollisions(push, asteroids, a1)){
 										bestpush = push;
 									}
 								}
@@ -583,19 +583,8 @@ public class Player implements pb.sim.Player {
 		}
 	}
 	
-	private boolean CheckIncidentalCollisions(onePush push, Asteroid[] asteroids){
-		Asteroid pushAst = null;
-		for(int i = 0; i < asteroids.length; i++){
-			if(asteroids[i].id == push.asteroidPushId){
-				pushAst = asteroids[i];
-				break;
-			}
-		}
-		if(pushAst == null){
-			System.out.println("ERRROR");
-		}
-		Asteroid newAst = pushTest(pushAst, push.time, push.energy,
-				push.direction);
+	private boolean CheckIncidentalCollisions(onePush push, Asteroid[] asteroids, Asteroid a1){
+		Asteroid newAst = a1;
 		
 		Point newAstPos;
 		Point otherAstPos;
@@ -621,14 +610,13 @@ public class Player implements pb.sim.Player {
 			if(asteroids[i].id == newAst.id || asteroids[i].id == push.asteroidCollidedId){
 				continue;
 			}
-			while(pushTime <= push.collision_time){
+			for(;pushTime <= push.collision_time;pushTime++){
 				newAstPos   = newAst.orbit.positionAt(pushTime) ;
 				otherAstPos = asteroids[i].orbit.positionAt(pushTime); 
-				if(Point.distance(newAstPos , otherAstPos) <= newAst.radius() + asteroids[i].radius()){
+				if(Point.distance(newAstPos , otherAstPos) < newAst.radius() + asteroids[i].radius()){
 					System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
 					return false;
 				}
-				pushTime++;
 			}
 		}
 		
