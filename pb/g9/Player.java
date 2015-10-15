@@ -197,8 +197,8 @@ public class Player implements pb.sim.Player {
 			if (asteroidsToConsider < 1)
 				asteroidsToConsider = 1;
 
-			List<Integer> favorableAsteroidsEculideanDistance = getKHighestWeightEuclideanDistance(asteroids, asteroidsToConsider/2, asteroids[j]);
-			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider/2, asteroids[j]);
+			List<Integer> favorableAsteroidsEculideanDistance = getKHighestWeightEuclideanDistance(asteroids, asteroidsToConsider, asteroids[j]);
+			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider, asteroids[j]);
 			Set<Integer> set = new HashSet<Integer>();
 
         	set.addAll(favorableAsteroidsEculideanDistance);
