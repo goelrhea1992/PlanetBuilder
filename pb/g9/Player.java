@@ -63,12 +63,12 @@ public class Player implements pb.sim.Player {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
 		long origin_period = a.orbit.period();
-		if (period / 365.0 > 20) {
+		if (period / 365.0 > 40) {
 			return intersection_list;
 		}
 		//System.out.println("  fast_find_intersection begin !");
-		if (period > 3650)
-			period = 3650;
+		//if (period > 3650)
+		//	period = 3650;
 		double r = a.radius() + b.radius();
 		Point c = new Point();
 		b.orbit.center(c);
