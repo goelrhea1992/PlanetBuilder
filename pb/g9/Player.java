@@ -29,6 +29,8 @@ public class Player implements pb.sim.Player {
 	private Point origin = new Point(0, 0);
 
 	private onePush bestpush;
+	private double Total_mass = 0;
+//	private long time_for_finding_collision = 3650;
 	private long wait_time = 100;
 	private double average_energy = Double.MAX_VALUE/20.0;
 	private int push_times = 0;
@@ -135,6 +137,10 @@ public class Player implements pb.sim.Player {
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
 		this.time_limit = time_limit;
+		
+		for (int i=0;i<asteroids.length;i++){
+			Total_mass += asteroids[i].mass;
+		}
 		bestpush = new onePush(-1, Double.MAX_VALUE, 0, 0, 0, 0, 0);
 	}
 
@@ -251,8 +257,11 @@ public class Player implements pb.sim.Player {
 							continue;
 						double r = a1.radius() + a2.radius();
 
-						// look 10 years in the future for collision
-						for (long ft = 0; ft < 3650; ++ft) {
+						// look in the future for collision
+						long time_left = time_limit - time + wait_time;
+						long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/a1.mass));
+						time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
+						for (long ft = 0; ft < time_for_finding_collision; ++ft) {
 
 							long t = time + wait_time + ft;
 							if (t >= time_limit)
@@ -269,9 +278,9 @@ public class Player implements pb.sim.Player {
 										d2, i, a1.id, t, a2.id);
 									
 								if (E < bestpush.energy) {
-								//	if (CheckIncidentalCollisions(push, asteroids)){
+									if (CheckIncidentalCollisions(push, asteroids)){
 										bestpush = push;
-								//	}
+									}
 								}
 
 //								energy[i] = E;
@@ -451,7 +460,7 @@ public class Player implements pb.sim.Player {
 			distanceToTarget = Double
 					.valueOf(Point.distance(a_center, target_center));
 			mass = asteroids[i].mass;
-			weights[i] = distance / mass;
+			weights[i] = (distance * distanceToTarget)/ mass;
 		}
 
 		List<Integer> highestKIndices;
