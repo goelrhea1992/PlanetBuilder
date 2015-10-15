@@ -460,7 +460,7 @@ public class Player implements pb.sim.Player {
 			distanceToTarget = Double
 					.valueOf(Point.distance(a_center, target_center));
 			mass = asteroids[i].mass;
-			weights[i] = (distance * distanceToTarget)/ mass;
+			weights[i] = distance / (mass * distanceToTarget);
 		}
 
 		List<Integer> highestKIndices;
