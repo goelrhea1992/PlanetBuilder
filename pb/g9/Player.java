@@ -274,8 +274,6 @@ public class Player implements pb.sim.Player {
 	// print orbital information
 	public void init(Asteroid[] asteroids, long time_limit) {
 
-		
-
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
 		this.time_limit = time_limit;
@@ -324,15 +322,15 @@ public class Player implements pb.sim.Player {
 		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
 			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
 
-			System.out.println("energy: "+ bestpush.energy);
-			System.out.println("Now Year: " + (1 + bestpush.time / 365));
-			System.out.println("Now Day: " + (1 + bestpush.time % 365));
-			System.out.println("Year: " + (1 + bestpush.collision_time / 365));
-			System.out.println("Day: " + (1 + bestpush.collision_time % 365));
+			// System.out.println("energy: "+ bestpush.energy);
+			// System.out.println("Now Year: " + (1 + bestpush.time / 365));
+			// System.out.println("Now Day: " + (1 + bestpush.time % 365));
+			// System.out.println("Year: " + (1 + bestpush.collision_time / 365));
+			// System.out.println("Day: " + (1 + bestpush.collision_time % 365));
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 
-		 	System.out.println("average energy: "+ average_energy);
+		 	// System.out.println("average energy: "+ average_energy);
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -342,14 +340,7 @@ public class Player implements pb.sim.Player {
 		 	bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 		 	return;
 		}
-
-		else if (time == bestpush.time){
-			System.out.println("too much energy: "+ bestpush.energy);
-			System.out.println("Now Year: " + (1 + bestpush.time / 365));
-			System.out.println("Now Day: " + (1 + bestpush.time % 365));
-			System.out.println("Year: " + (1 + bestpush.collision_time / 365));
-			System.out.println("Day: " + (1 + bestpush.collision_time % 365));
-		}	
+			
 		// if not yet time to push do nothing
 		if (time <= time_of_push)
 			return;
@@ -370,7 +361,7 @@ public class Player implements pb.sim.Player {
 		else
 			// if more than 10 asteorids, consider 20%
 			asteroidsToConsider = asteroids.length/5;
-		
+
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
 			j = getSinkIndex(asteroids);
 
@@ -384,11 +375,11 @@ public class Player implements pb.sim.Player {
 					continue;
 				double[][] search_space;
 				if (retry > 1) {
-					System.out.println("Retry " + retry + ": USING BIGGER SEARCH SPACE");
+					// System.out.println("Retry " + retry + ": USING BIGGER SEARCH SPACE");
 					search_space = find_bigger_search_space(asteroids, i, j);
 				}
 				else {
-					System.out.println("Retry " + retry + ": USING SMALLER SEARCH SPACE");
+					// System.out.println("Retry " + retry + ": USING SMALLER SEARCH SPACE");
 					search_space = find_search_space(asteroids,i,j);
 				}
 
@@ -457,7 +448,7 @@ public class Player implements pb.sim.Player {
 			if (found) 
 				break;
 		}
-		System.out.println();
+		// System.out.println();
 		time_of_push = time + turns_per_retry;
 	}
 
@@ -792,7 +783,7 @@ public class Player implements pb.sim.Player {
 			Asteroid testAst = pushTest(a, minDistTime - 365, E, dir);
 			newPos = testAst.orbit.positionAt((long)minDistTime - testAst.epoch);
 			if (Point.distance(posB, newPos) < r){
-				System.out.println("Good push!");
+				// System.out.println("Good push!");
 				Asteroid.push(a, minDistTime - 365, E, dir);
 				didPush = true;
 				break;
