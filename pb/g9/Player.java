@@ -293,7 +293,10 @@ public class Player implements pb.sim.Player {
 		bestpush = new onePush(-1, Double.MAX_VALUE, 0, 0, 0, 0, 0);
 	}
 
-	public int getSinkIndex(Asteroid[] asteroids, long sink) {
+	/**
+	* Assuming the latest collided asteroid has the maximum id.
+	*/
+	public int getSinkIndex(Asteroid[] asteroids) {
 		long maxID = Long.MIN_VALUE;
 		int maxIndex = -1;
 
@@ -354,7 +357,7 @@ public class Player implements pb.sim.Player {
 		}
 
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
-			j = getSinkIndex(asteroids, sink);
+			j = getSinkIndex(asteroids);
 
 			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider, asteroids[j]);
 			Set<Integer> set = new HashSet<Integer>();
