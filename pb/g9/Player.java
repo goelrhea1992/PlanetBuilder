@@ -274,12 +274,7 @@ public class Player implements pb.sim.Player {
 	// print orbital information
 	public void init(Asteroid[] asteroids, long time_limit) {
 
-		if (asteroids.length < 10)
-			// if fewer than 10 asteroids, consider all.
-			asteroidsToConsider = asteroids.length;
-		else
-			// if more than 10 asteorids, consider 20%
-			asteroidsToConsider = asteroids.length/5;
+		
 
 		if (Orbit.dt() != 24 * 60 * 60)
 			throw new IllegalStateException("Time quantum is not a day");
@@ -369,6 +364,13 @@ public class Player implements pb.sim.Player {
 			sink = asteroids[j].id;
 		}
 
+		if (asteroids.length < 10)
+			// if fewer than 10 asteroids, consider all.
+			asteroidsToConsider = asteroids.length - 1;
+		else
+			// if more than 10 asteorids, consider 20%
+			asteroidsToConsider = asteroids.length/5;
+		
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
 			j = getSinkIndex(asteroids);
 
