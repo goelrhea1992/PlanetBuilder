@@ -290,7 +290,7 @@ public class Player implements pb.sim.Player {
 			if (asteroids[i].orbit.period() > max_period)
 				max_period = asteroids[i].orbit.period();
 		}
-		bestpush = new onePush(-1, Double.MAX_VALUE, 0, 0, 0, 0, 0);
+		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class Player implements pb.sim.Player {
 		 	
 		 	// do not push again until collision happens
 		 	time_of_push = bestpush.collision_time + 1;
-		 	bestpush = new onePush(-1, Double.MAX_VALUE,0, 0, 0, 0, 0);
+		 	bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 		 	return;
 		}
 
@@ -439,9 +439,9 @@ public class Player implements pb.sim.Player {
 						// if collision, return push to the simulator
 						if (Point.distance(p1, p2) < r) {
 							found = true;
-							onePush push = new onePush(time + wait_time, E,
+							onePush push = new onePush(time + wait_time, E, asteroids[i].mass,
 									d2, i, a1.id, t, a2.id);
-							if (E < bestpush.energy) {
+							if (E / push.mass < bestpush.energy/bestpush.mass) {
 								if (CheckIncidentalCollisions(push, asteroids, a1)) {
 									bestpush = push;
 								}
@@ -861,6 +861,9 @@ class onePush {
 
 	// energy used to make the push
 	double energy;
+	
+	// mass of the asteroids to push
+	double mass;
 
 	// the direction of the push
 	double direction;
@@ -877,10 +880,11 @@ class onePush {
 	// id of the asteroid to push towards
     long asteroidCollidedId;
 	
-	public onePush(long time, double energy, double direction, int i, long pushId,
+	public onePush(long time, double energy, double mass, double direction, int i, long pushId,
 			long collision_time, long collidedId) {
 		this.time = time;
 		this.energy = energy;
+		this.mass = mass;
 		this.direction = direction;
 		this.i = i;
 		this.asteroidPushId = pushId;
