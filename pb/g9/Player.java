@@ -31,7 +31,6 @@ public class Player implements pb.sim.Player {
 	private onePush bestpush;
 	private double Total_mass = 0;
 	private long max_period = 0;
-//	private long time_for_finding_collision = 3650;
 	private long wait_time = 100;
 	private double average_energy = Double.MAX_VALUE/20.0;
 	private int push_times = 0;
@@ -71,9 +70,7 @@ public class Player implements pb.sim.Player {
 		if (period / 365.0 > max_period) {
 			return intersection_list;
 		}
-		//System.out.println("  fast_find_intersection begin !");
-		//if (period > 3650)
-		//	period = 3650;
+
 		double r = a.radius() + b.radius();
 		Point c = new Point();
 		b.orbit.center(c);
@@ -255,10 +252,8 @@ public class Player implements pb.sim.Player {
 
 		double d2;
 		if (asteroids[j].orbit.a < asteroids[i].orbit.a)
-			//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = Math.PI + d1;
 		else
-			//d2 = d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = d1;
 
 		double k_min = 0.6;
@@ -290,7 +285,7 @@ public class Player implements pb.sim.Player {
 		bestpush = new onePush(-1, Double.MAX_VALUE, 0, 0, 0, 0, 0);
 	}
 
-	public void getSinkIndex(asteroids, sink) {
+	public int getSinkIndex(Asteroid[] asteroids, Asteroid sink) {
 		for (int i = 0; i < asteroids.length; i++) {
 			if (asteroids[i].id == sink.id) 
 				return i;
@@ -302,10 +297,6 @@ public class Player implements pb.sim.Player {
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
 		time++;
-		// if (time == bestpush.time && bestpush.energy < (random.nextInt(8) + 2) * average_energy) {
-		// 	System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
-		// 	push_times++;
-		// 	average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
 			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
 
@@ -423,18 +414,8 @@ public class Player implements pb.sim.Player {
 								if (CheckIncidentalCollisions(push, asteroids, a1)) {
 									bestpush = push;
 								}
-
-
-//								energy[i] = E;
-//								direction[i] = d2;
-//
-//								// do not push again until collision happens
-//								time_of_push = t + 1;
-//								iteration++;
 								System.out.println("  Collision prediction !");
 								System.out.println("  Year: " + (1 + t / 365)+"  Day: " + (1 + t % 365));
-
-//								return;
 							}
 						}
 					}
