@@ -175,27 +175,56 @@ public class Player implements pb.sim.Player {
 		double e_j= Math.sqrt(asteroids[j].orbit.a*asteroids[j].orbit.a
 				-asteroids[j].orbit.b*asteroids[j].orbit.b)/asteroids[j].orbit.a;
 		double d2;
-		if ((1+e_j)*asteroids[j].orbit.a <= asteroids[i].orbit.a)
+		if ((1+e_j)*asteroids[j].orbit.a <= asteroids[i].orbit.a){
 			//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = Math.PI + d1;
-		else if ((1-e_j)*asteroids[j].orbit.a >= asteroids[i].orbit.a)
-			//d2 = d1 + (k2 - 0.5) * Math.PI * 0.25;
+			double E_j1,E_j2;
+			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.6*(1-e_j)*asteroids[i].orbit.a));
+			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
+			v_j1 = Math.abs(v_j1-v1);
+			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
+			v_j2 = Math.abs(v_j2-v1);
+			E_j1 = 0.5 * asteroids[i].mass * v_j1 * v_j1;
+			E_j2 = 0.5 * asteroids[i].mass * v_j2 * v_j2;
+			double E_diff = E_j2-E_j1;
+			for(int k=0;k<num;k++){
+				space[k][0] = E_j1+k * E_diff/num;
+				space[k][1] = d2;
+			}
+			return space;
+		}
+		else if ((1-e_j)*asteroids[j].orbit.a >= asteroids[i].orbit.a){
 			d2 = d1;
+			double E_j1,E_j2;
+			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+1.5*(1+e_j)*asteroids[i].orbit.a));
+			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
+			v_j1 = Math.abs(v_j1-v1);
+			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
+			v_j2 = Math.abs(v_j2-v1);
+			E_j1 = 0.5 * asteroids[i].mass * v_j1 * v_j1;
+			E_j2 = 0.5 * asteroids[i].mass * v_j2 * v_j2;
+			double E_diff = E_j2-E_j1;
+			for(int k=0;k<num;k++){
+				space[k][0] = E_j1+k * E_diff/num;
+				space[k][1] = d2;
+			}
+			return space;
+		}
 		else {
 			d2 = d1;
-			
 			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+1.5*(1+e_j)*asteroids[i].orbit.a));
 			double v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
-			
-			
 			for(int k=0;k<num/2;k++){
 				space[k][0] = k * E_j/num;
 				space[k][1] = d2;
 			}
+			
 			d2 = Math.PI + d1;
-			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.5*(1-e_j)*asteroids[i].orbit.a));
+			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+.6*(1-e_j)*asteroids[i].orbit.a));
 			v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
@@ -205,42 +234,13 @@ public class Player implements pb.sim.Player {
 			}
 			return space;
 		}
-		double E_j1,E_j2;
-		if (e_j!=0){
-			E_j1= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a)-E_i);
-			E_j2= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a)-E_i);
-			if (E_j1 > E_j2){
-				double tmp = E_j1;
-				E_j1 = E_j2;
-				E_j2 = tmp;
-			}
-			//E_j2 = E_j1*2 < E_j2 ? E_j1*2: E_j2;
-			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a));
-			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.5*(1-e_j)*asteroids[i].orbit.a));
-			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
-			v_j1 = Math.abs(v_j1-v1);
-			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
-			v_j2 = Math.abs(v_j2-v1);
-			E_j1 = 0.5 * asteroids[i].mass * v_j1 * v_j1;
-			E_j2 = 0.5 * asteroids[i].mass * v_j2 * v_j2;
-//			if (E_j1 > E_j2){
-//				double tmp = E_j1;
-//				E_j1 = E_j2;
-//				E_j2 = tmp;
-//			}
-//			E_j2 = 4*E_j2;
-		}
-		else {
-			E_j1= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)*1-E_i);
-			E_j2= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)-E_i)*2;
-		}
+//		if (e_j!=0){
+//		}
+//		else {
+//			E_j1= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)*1-E_i);
+//			E_j2= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)-E_i)*2;
+//		}
 		
-		double E_diff = E_j2-E_j1;
-		for(int k=0;k<num;k++){
-			space[k][0] = E_j1+k * E_diff/num;
-			space[k][1] = d2;
-		}
-		return space;
 	}
 
 	private double[][] find_bigger_search_space(Asteroid[] asteroids, int i, int j) {
