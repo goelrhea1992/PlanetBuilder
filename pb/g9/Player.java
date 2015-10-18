@@ -257,7 +257,7 @@ public class Player implements pb.sim.Player {
 		else
 			d2 = d1;
 
-		double k_min = 0.3;
+		double k_min = 0.5;
 		double k_max = 0.8;
 		double k_step = 0.005;
 		int z;
@@ -300,13 +300,26 @@ public class Player implements pb.sim.Player {
 		long maxID = Long.MIN_VALUE;
 		int maxIndex = -1;
 
+		long maxID2 = Long.MIN_VALUE;
+		int maxIndex2 = -1;
+
 		for (int i = 0; i < asteroids.length; i++) {
 			if (asteroids[i].id > maxID) {
+				maxID2 = maxID;
+				maxIndex2 = maxIndex;
 				maxID = asteroids[i].id;
 				maxIndex = i;
 			}
+			else if (asteroids[i].id > maxID2) {
+				maxID2 = asteroids[i].id;
+				maxIndex2 = i;
+			}
 		}
-		return maxIndex;
+
+		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
+			return maxIndex;
+		else
+			return maxIndex2;
 	}
 
 	// try to push asteroid
@@ -368,15 +381,20 @@ public class Player implements pb.sim.Player {
 				if (i == j)
 					continue;
 				double[][] search_space;
-				if (retry > 1)
+				if (retry > 1) {
+					System.out.println("Retry " + retry + ": USING BIGGER SEARCH SPACE");
 					search_space = find_bigger_search_space(asteroids, i, j);
-				else
+				}
+				else {
+					System.out.println("Retry " + retry + ": USING SMALLER SEARCH SPACE");
 					search_space = find_search_space(asteroids,i,j);
+				}
+
 
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
 					double d2 = search_space[k][1];
-					System.out.println("Energy: " + E);
+					// System.out.println("Energy: " + E);
 					// try to push asteroid
 					Asteroid a1 = null;
 					try {
@@ -403,7 +421,12 @@ public class Player implements pb.sim.Player {
 					long time_left = time_limit - time + wait_time;
 					long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/a1.mass));
 					time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
-					for (long ft = 0; ft < time_for_finding_collision; ++ft) {
+					long multiple = (long) (0.2 * time_left/time_for_finding_collision);
+
+					if (multiple < 1) 
+						multiple = 1;
+					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
+					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
 						long t = time + wait_time + ft;
 						if (t >= time_limit)
@@ -432,6 +455,7 @@ public class Player implements pb.sim.Player {
 			if (found) 
 				break;
 		}
+		System.out.println();
 		time_of_push = time + turns_per_retry;
 	}
 
