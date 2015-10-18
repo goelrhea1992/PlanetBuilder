@@ -35,7 +35,7 @@ public class Player implements pb.sim.Player {
 	private double average_energy = Double.MAX_VALUE/20.0;
 	private int push_times = 0;
 
-	Asteroid sink;
+	long sink;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
@@ -285,9 +285,9 @@ public class Player implements pb.sim.Player {
 		bestpush = new onePush(-1, Double.MAX_VALUE, 0, 0, 0, 0, 0);
 	}
 
-	public int getSinkIndex(Asteroid[] asteroids, Asteroid sink) {
+	public int getSinkIndex(Asteroid[] asteroids, long sink) {
 		for (int i = 0; i < asteroids.length; i++) {
-			if (asteroids[i].id == sink.id) 
+			if (asteroids[i].id == sink) 
 				return i;
 		}
 		return -1;
@@ -339,7 +339,7 @@ public class Player implements pb.sim.Player {
 			if (iteration == 1) {
 				List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
 				j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-				sink = asteroids[j];
+				sink = asteroids[j].id;
 			}
 			else
 				j = getSinkIndex(asteroids, sink);
