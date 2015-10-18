@@ -256,7 +256,7 @@ public class Player implements pb.sim.Player {
 		else
 			d2 = d1;
 
-		double k_min = 0.6;
+		double k_min = 0.3;
 		double k_max = 0.8;
 		double k_step = 0.005;
 		int z;
