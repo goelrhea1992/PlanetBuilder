@@ -167,8 +167,13 @@ public class Player implements pb.sim.Player {
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
+		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
 		double d1 = Math.atan2(v.y, v.x);
 		double E_i= asteroids[i].mass*Orbit.GM/(2*asteroids[i].orbit.a);
+		Point r = asteroids[i].orbit.positionAt(time + wait_time
+				- asteroids[i].epoch);
+		double dist = Math.sqrt(r.x * r.x + r.y * r.y);
+		double E_p = asteroids[i].mass*Orbit.GM/(dist);
 		double e_j= Math.sqrt(asteroids[j].orbit.a*asteroids[j].orbit.a
 				-asteroids[j].orbit.b*asteroids[j].orbit.b)/asteroids[j].orbit.a;
 		double d2;
@@ -180,13 +185,22 @@ public class Player implements pb.sim.Player {
 			d2 = d1;
 		else {
 			d2 = d1;
-			double E_j= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a)-E_i);
+			
+			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+1.5*(1+e_j)*asteroids[i].orbit.a));
+			double v_j = Math.sqrt(2*E_j/asteroids[i].mass);
+			v_j = Math.abs(v_j-v1);
+			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
+			
+			
 			for(int k=0;k<num/2;k++){
 				space[k][0] = k * E_j/num;
 				space[k][1] = d2;
 			}
 			d2 = Math.PI + d1;
-			E_j= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a)-E_i);
+			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.5*(1-e_j)*asteroids[i].orbit.a));
+			v_j = Math.sqrt(2*E_j/asteroids[i].mass);
+			v_j = Math.abs(v_j-v1);
+			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
 			for(int k=0;k<num/2;k++){
 				space[k][0] = k * E_j/num;
 				space[k][1] = d2;
@@ -203,11 +217,26 @@ public class Player implements pb.sim.Player {
 				E_j2 = tmp;
 			}
 			//E_j2 = E_j1*2 < E_j2 ? E_j1*2: E_j2;
+			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.5*(1-e_j)*asteroids[i].orbit.a));
+			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
+			v_j1 = Math.abs(v_j1-v1);
+			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
+			v_j2 = Math.abs(v_j2-v1);
+			E_j1 = 0.5 * asteroids[i].mass * v_j1 * v_j1;
+			E_j2 = 0.5 * asteroids[i].mass * v_j2 * v_j2;
+//			if (E_j1 > E_j2){
+//				double tmp = E_j1;
+//				E_j1 = E_j2;
+//				E_j2 = tmp;
+//			}
+//			E_j2 = 4*E_j2;
 		}
 		else {
 			E_j1= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)*1-E_i);
 			E_j2= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)-E_i)*2;
 		}
+		
 		double E_diff = E_j2-E_j1;
 		for(int k=0;k<num;k++){
 			space[k][0] = E_j1+k * E_diff/num;
@@ -273,10 +302,22 @@ public class Player implements pb.sim.Player {
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
 		time++;
-		if (time == bestpush.time && bestpush.energy < (random.nextInt(8) + 2) * average_energy) {
-			System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
+		// if (time == bestpush.time && bestpush.energy < (random.nextInt(8) + 2) * average_energy) {
+		// 	System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
+		// 	push_times++;
+		// 	average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
+		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
+			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
+
+			System.out.println("energy: "+ bestpush.energy);
+			System.out.println("Now Year: " + (1 + bestpush.time / 365));
+			System.out.println("Now Day: " + (1 + bestpush.time % 365));
+			System.out.println("Year: " + (1 + bestpush.collision_time / 365));
+			System.out.println("Day: " + (1 + bestpush.collision_time % 365));
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
+
+		 	System.out.println("average energy: "+ average_energy);
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -288,8 +329,13 @@ public class Player implements pb.sim.Player {
 		 	return;
 		}
 
-		else if (time == bestpush.time)
+		else if (time == bestpush.time){
 			System.out.println("too much energy: "+ bestpush.energy);
+			System.out.println("Now Year: " + (1 + bestpush.time / 365));
+			System.out.println("Now Day: " + (1 + bestpush.time % 365));
+			System.out.println("Year: " + (1 + bestpush.collision_time / 365));
+			System.out.println("Day: " + (1 + bestpush.collision_time % 365));
+		}	
 		// if not yet time to push do nothing
 		if (time <= time_of_push)
 			return;
@@ -377,6 +423,18 @@ public class Player implements pb.sim.Player {
 								if (CheckIncidentalCollisions(push, asteroids, a1)) {
 									bestpush = push;
 								}
+
+
+//								energy[i] = E;
+//								direction[i] = d2;
+//
+//								// do not push again until collision happens
+//								time_of_push = t + 1;
+//								iteration++;
+								System.out.println("  Collision prediction !");
+								System.out.println("  Year: " + (1 + t / 365)+"  Day: " + (1 + t % 365));
+
+//								return;
 							}
 						}
 					}
