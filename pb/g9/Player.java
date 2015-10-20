@@ -34,6 +34,7 @@ public class Player implements pb.sim.Player {
 	private long wait_time = 100;
 	private double average_energy = Double.MAX_VALUE/20.0;
 	private int push_times = 0;
+	private int num_asteroids = 0;
 
 	long sink = -1;
 	int asteroidsToConsider = -1;
@@ -68,10 +69,18 @@ public class Player implements pb.sim.Player {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
 		long origin_period = a.orbit.period();
-		if (period / 365.0 > max_period) {
+		if (period  > max_period) {
 			return intersection_list;
 		}
-
+		// look in the future for collision
+		long time_left = time_limit - time + wait_time;
+		long time_for_finding_collision = (long) (time_left / ((Total_mass - a.mass)/b.mass));
+		time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
+		long multiple = (long) (0.2 * time_left/time_for_finding_collision);
+		if (multiple < 1) 
+			multiple = 1;
+		if (period > multiple*time_for_finding_collision)
+			period = multiple*time_for_finding_collision;
 		double r = a.radius() + b.radius();
 		Point c = new Point();
 		b.orbit.center(c);
@@ -283,6 +292,7 @@ public class Player implements pb.sim.Player {
 			if (asteroids[i].orbit.period() > max_period)
 				max_period = asteroids[i].orbit.period();
 		}
+		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 	}
 
@@ -293,31 +303,35 @@ public class Player implements pb.sim.Player {
 		long maxID = Long.MIN_VALUE;
 		int maxIndex = -1;
 
-		long maxID2 = Long.MIN_VALUE;
-		int maxIndex2 = -1;
+//		long maxID2 = Long.MIN_VALUE;
+//		int maxIndex2 = -1;
 
 		for (int i = 0; i < asteroids.length; i++) {
 			if (asteroids[i].id > maxID) {
-				maxID2 = maxID;
-				maxIndex2 = maxIndex;
+//				maxID2 = maxID;
+//				maxIndex2 = maxIndex;
 				maxID = asteroids[i].id;
 				maxIndex = i;
 			}
-			else if (asteroids[i].id > maxID2) {
-				maxID2 = asteroids[i].id;
-				maxIndex2 = i;
-			}
+//			else if (asteroids[i].id > maxID2) {
+//				maxID2 = asteroids[i].id;
+//				maxIndex2 = i;
+//			}
 		}
 
-		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
+//		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
 			return maxIndex;
-		else
-			return maxIndex2;
+//		else
+//			return maxIndex2;
 	}
 
 	// try to push asteroid
 	public void play(Asteroid[] asteroids, double[] energy, double[] direction) {
 
+		if (asteroids.length < num_asteroids) {
+			bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
+		}
+		num_asteroids = asteroids.length;
 		time++;
 		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
 			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
