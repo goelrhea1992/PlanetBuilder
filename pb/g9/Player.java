@@ -69,9 +69,9 @@ public class Player implements pb.sim.Player {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
 		long origin_period = a.orbit.period();
-		if (period  > max_period) {
-			return intersection_list;
-		}
+		//if (period  > max_period) {
+		//	return intersection_list;
+		//}
 		// look in the future for collision
 		long time_left = time_limit - time + wait_time;
 		long time_for_finding_collision = (long) (time_left / ((Total_mass - a.mass)/b.mass));
@@ -399,7 +399,19 @@ public class Player implements pb.sim.Player {
 					search_space = find_search_space(asteroids,i,j);
 				}
 
+				// search for collision with any other asteroids
+				Asteroid a2 = asteroids[j];
 
+				long time_left = time_limit - time + wait_time;
+				long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/asteroids[i].mass));
+				time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
+				long multiple = (long) (0.1 * time_left/time_for_finding_collision);
+
+				if (multiple < 1) 
+					multiple = 1;
+				
+				System.out.println("We're looking ahead these many years: " + multiple * time_for_finding_collision/365);
+				
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
 					double d2 = search_space[k][1];
@@ -415,10 +427,6 @@ public class Player implements pb.sim.Player {
 						continue;
 					}
 
-					Point p1 = new Point(), p2 = new Point();
-
-					// search for collision with any other asteroids
-					Asteroid a2 = asteroids[j];
 					HashSet<Long> timelist = new HashSet<Long>();
 					ArrayList<Point> intersections = fast_find_intersection(a1,
 							a2, timelist);
@@ -426,16 +434,11 @@ public class Player implements pb.sim.Player {
 						continue;
 					double r = a1.radius() + a2.radius();
 
+					Point p1 = new Point(), p2 = new Point();
+
 					// look in the future for collision
-					long time_left = time_limit - time + wait_time;
-					long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/a1.mass));
-					time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
-					long multiple = (long) (0.01 * time_left/time_for_finding_collision);
+					
 
-					if (multiple < 1) 
-						multiple = 1;
-
-					System.out.println("We're look ahead these many years: " + multiple * time_for_finding_collision/365);
 					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
