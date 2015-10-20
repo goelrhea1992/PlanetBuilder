@@ -161,7 +161,7 @@ public class Player implements pb.sim.Player {
 		return intersection_list;
 	}
 	private double[][] find_search_space(Asteroid[] asteroids, int i, int j) {
-		int num = 100;
+		int num = 50;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
@@ -244,7 +244,7 @@ public class Player implements pb.sim.Player {
 	}
 
 	private double[][] find_bigger_search_space(Asteroid[] asteroids, int i, int j) {
-		int num = 100;
+		int num = 50;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
@@ -264,6 +264,8 @@ public class Player implements pb.sim.Player {
 		double k;
 
 		for (k = k_min, z = 0; k < k_max; k = k + k_step, z += 1) {
+			if (z == num)
+				break;
 			double v2 = v1 * k;
 			space[z][0] = 0.5 * asteroids[i].mass * v2 * v2;
 			space[z][1] = d2;
@@ -414,10 +416,12 @@ public class Player implements pb.sim.Player {
 					long time_left = time_limit - time + wait_time;
 					long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/a1.mass));
 					time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
-					long multiple = (long) (0.2 * time_left/time_for_finding_collision);
+					long multiple = (long) (0.01 * time_left/time_for_finding_collision);
 
 					if (multiple < 1) 
 						multiple = 1;
+
+					System.out.println("We're look ahead these many years: " + multiple * time_for_finding_collision/365);
 					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
