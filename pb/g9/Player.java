@@ -42,9 +42,9 @@ public class Player implements pb.sim.Player {
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
-		if (period / 365.0 > 50) {
-			return intersection_list;
-		}
+		//if (period / 365.0 > 50) {
+		//	return intersection_list;
+		//}
 		if (period > 3650)
 			period = 3650;
 		double r = a.radius() + b.radius();
@@ -69,14 +69,14 @@ public class Player implements pb.sim.Player {
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
 		long origin_period = a.orbit.period();
-		if (period  > max_period) {
+		if (period  > max_period*2) {
 			return intersection_list;
 		}
 		// look in the future for collision
 		long time_left = time_limit - time + wait_time;
 		long time_for_finding_collision = (long) (time_left / ((Total_mass - a.mass)/b.mass));
 		time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
-		long multiple = (long) (0.2 * time_left/time_for_finding_collision);
+		long multiple = (long) (0.1 * time_left/time_for_finding_collision);
 		if (multiple < 1) 
 			multiple = 1;
 		if (period > multiple*time_for_finding_collision)
@@ -169,7 +169,10 @@ public class Player implements pb.sim.Player {
 		//System.out.println("  fast_find_intersection end !");
 		return intersection_list;
 	}
-	private double[][] find_search_space(Asteroid[] asteroids, int i, int j) {
+	private double[][] find_search_space(Asteroid[] asteroids, int i, int j, boolean bigger) {
+		double p = 1.5;
+		if (bigger)
+			p = 2.5;
 		int num = 50;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
@@ -189,7 +192,7 @@ public class Player implements pb.sim.Player {
 			d2 = Math.PI + d1;
 			double E_j1,E_j2;
 			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a));
-			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+0.6*(1-e_j)*asteroids[i].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a/p));
 			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
 			v_j1 = Math.abs(v_j1-v1);
 			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
@@ -207,7 +210,7 @@ public class Player implements pb.sim.Player {
 			d2 = d1;
 			double E_j1,E_j2;
 			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a));
-			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+1.5*(1+e_j)*asteroids[i].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a*p));
 			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
 			v_j1 = Math.abs(v_j1-v1);
 			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
@@ -223,7 +226,7 @@ public class Player implements pb.sim.Player {
 		}
 		else {
 			d2 = d1;
-			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+1.5*(1+e_j)*asteroids[i].orbit.a));
+			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a*p));
 			double v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
@@ -233,7 +236,7 @@ public class Player implements pb.sim.Player {
 			}
 			
 			d2 = Math.PI + d1;
-			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+.6*(1-e_j)*asteroids[i].orbit.a));
+			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a/p));
 			v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
@@ -294,6 +297,7 @@ public class Player implements pb.sim.Player {
 			if (asteroids[i].orbit.period() > max_period)
 				max_period = asteroids[i].orbit.period();
 		}
+		System.out.println("max_period: "+max_period/365.0);
 		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 	}
@@ -392,11 +396,11 @@ public class Player implements pb.sim.Player {
 				double[][] search_space;
 				if (retry > 1) {
 					// System.out.println("Retry " + retry + ": USING BIGGER SEARCH SPACE");
-					search_space = find_bigger_search_space(asteroids, i, j);
+					search_space = find_search_space(asteroids, i, j,true);
 				}
 				else {
 					// System.out.println("Retry " + retry + ": USING SMALLER SEARCH SPACE");
-					search_space = find_search_space(asteroids,i,j);
+					search_space = find_search_space(asteroids,i,j,false);
 				}
 
 
@@ -430,12 +434,12 @@ public class Player implements pb.sim.Player {
 					long time_left = time_limit - time + wait_time;
 					long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/a1.mass));
 					time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
-					long multiple = (long) (0.01 * time_left/time_for_finding_collision);
+					long multiple = (long) (0.1 * time_left/time_for_finding_collision);
 
 					if (multiple < 1) 
 						multiple = 1;
 
-					System.out.println("We're look ahead these many years: " + multiple * time_for_finding_collision/365);
+					//System.out.println("We're look ahead these many years: " + multiple * time_for_finding_collision/365);
 					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
