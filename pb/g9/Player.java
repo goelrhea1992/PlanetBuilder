@@ -34,8 +34,8 @@ public class Player implements pb.sim.Player {
 	private double max_mass = 0;
 	private long max_period = 0;
 	private long wait_time = 100;
-	private double average_energy = Double.MAX_VALUE/20.0;
-	private int push_times = 0;
+//	private double average_energy = Double.MAX_VALUE/20.0;
+//	private int push_times = 0;
 	private int num_asteroids = 0;
 
 	int sink = -1;
@@ -77,7 +77,6 @@ public class Player implements pb.sim.Player {
 			return intersection_list;
 		}
 
-		// look in the future for collision
 		long time_left = time_limit - time + wait_time;
 		long time_for_finding_collision = (long) (time_left / ((target_mass - a.mass)/b.mass));
 		time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
@@ -109,7 +108,6 @@ public class Player implements pb.sim.Player {
 			diff[2] = dist - b.orbit.a * 2;
 			if (diff[1] >= 0 && diff[2] <0 || diff[1] <= 0 && diff[2] >0 ){
 				for(long ft1 = ft-step_length;ft1 < ft;ft1++){
-					//System.out.print(ft1+" ("+ft+") ");
 					t = time + wait_time + ft1;
 					p1 = new Point();
 					a.orbit.positionAt(t - a.epoch, p1);
@@ -123,7 +121,6 @@ public class Player implements pb.sim.Player {
 			}
 			else if (diff[1] <= diff[2] && diff[1] <= diff[0]) {
 				for(long ft1 = ft-2*step_length;ft1 < ft;ft1++){
-					//System.out.print(ft1+" ("+ft+") ");
 					t = time + wait_time + ft1;
 					p1 = new Point();
 					a.orbit.positionAt(t - a.epoch, p1);
@@ -138,8 +135,6 @@ public class Player implements pb.sim.Player {
 			diff[0] = diff[1];
 			diff[1] = diff[2];
 		}
-
-		//System.out.println("  fast_find_intersection mid !");
 		t = time + wait_time + period;
 		p1 = new Point();
 		a.orbit.positionAt(t - a.epoch, p1);		
@@ -159,7 +154,6 @@ public class Player implements pb.sim.Player {
 		}
 		else if (diff[1] <= diff[2] && diff[1] <= diff[0]) {
 			for(long ft1 = ft-2*step_length;ft1 < period;ft1++){
-				//System.out.print(ft1+" ("+ft+") ");
 				t = time + wait_time + ft1;
 				p1 = new Point();
 				a.orbit.positionAt(t - a.epoch, p1);
@@ -171,13 +165,12 @@ public class Player implements pb.sim.Player {
 				}
 			}
 		}
-		//System.out.println("  fast_find_intersection end !");
 		return intersection_list;
 	}
 	private double[][] find_search_space(Asteroid[] asteroids, int i, int j, boolean bigger) {
 		double p = 1.5;
 		if (bigger)
-			p = 2.5;
+			p = 3;
 		int num = 30;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
@@ -193,7 +186,6 @@ public class Player implements pb.sim.Player {
 				-asteroids[j].orbit.b*asteroids[j].orbit.b)/asteroids[j].orbit.a;
 		double d2;
 		if ((1+e_j)*asteroids[j].orbit.a <= asteroids[i].orbit.a){
-			//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = Math.PI + d1;
 			double E_j1,E_j2;
 			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1+e_j)*asteroids[j].orbit.a));
@@ -264,9 +256,22 @@ public class Player implements pb.sim.Player {
 		}
 		ArrayList<Map.Entry<Asteroid, Integer>>  asteroidlist =	new ArrayList<Map.Entry<Asteroid, Integer>>(asteroidSorted.entrySet());
 		Collections.sort( asteroidlist, comparator);
+		
 		double sum_mass = 0;
-		double min_value = Double.MAX_VALUE;		int i = 0, j = 0;
+		double min_value = Double.MAX_VALUE;
+		int i = 0, j = 0;
 		int target_index = -1;
+		
+
+		long max_period = 0;
+		long time_left = time_limit;
+		long time_for_finding_collision = (long) (time_left / (asteroids.length*target_mass / Total_mass));
+		long multiple = (long) (0.1 * time_left/time_for_finding_collision);
+		if (multiple < 1) 
+			multiple = 1;
+		max_period = multiple*time_for_finding_collision;		
+
+		System.out.println(max_period / 365.0);
 		
 		for(;i<asteroids.length;) {
 			for (;sum_mass<target_mass && j<asteroids.length;j++){
@@ -275,6 +280,8 @@ public class Player implements pb.sim.Player {
 			if (sum_mass < target_mass)
 				break;
 			for (int k=i;k<j;k++){
+				if (asteroidlist.get(k).getKey().orbit.period() > max_period && target_index != -1)
+					break;
 				double sum_value = 0;
 				for(int kk = i;kk<j;kk++){
 					sum_value += asteroidlist.get(kk).getKey().mass*
@@ -282,7 +289,7 @@ public class Player implements pb.sim.Player {
 									-1/asteroidlist.get(k).getKey().orbit.a);
 				}
 				if (sum_value < min_value){
-					target_index = k;
+					target_index = asteroidlist.get(k).getValue();
 					min_value = sum_value;
 				}
 			}
@@ -309,10 +316,10 @@ public class Player implements pb.sim.Player {
 			target_mass = Total_mass;
 		else
 			target_mass = .5*Total_mass;
-		//System.out.println("max_period: "+max_period/365.0);
 		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
-		
+
+		System.out.println(max_period/365.0);
 //		for(int i = 0; i < asteroids.length; i++){
 //			if(asteroids[i].mass > Total_mass * 0.5f){
 //				has_majority_asteroid = true;
@@ -360,10 +367,8 @@ public class Player implements pb.sim.Player {
 		num_asteroids = asteroids.length;
 		time++;
 		if (time == bestpush.time){
-
-			push_times++;
-			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
-
+//			push_times++;
+//			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -385,13 +390,12 @@ public class Player implements pb.sim.Player {
 		if (iteration == 1){
 			if (sink == -1) {
 				// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-				// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
-				
+				// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);				
 				// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-				//j = findCandidateOrbitsForSink(asteroids, target_mass);
+				// j = findCandidateOrbitsForSink(asteroids, target_mass);
 				j = findTargetForSink(asteroids,target_mass);
+				System.out.println(asteroids[j].orbit.period()/365.0);
 				sink = j;
-				System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			}
 			else
 				j = sink;
@@ -426,10 +430,7 @@ public class Player implements pb.sim.Player {
 					search_space = find_search_space(asteroids,i,j,false);
 				}
 
-				// search for collision with any other asteroids
 				Asteroid a2 = asteroids[j];
-
-
 				long time_left = time_limit - time + wait_time;
 				long time_for_finding_collision = (long) (time_left / ((target_mass - a2.mass)/asteroids[i].mass));
 				time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
@@ -445,7 +446,6 @@ public class Player implements pb.sim.Player {
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
 					double d2 = search_space[k][1];
-					// System.out.println("Energy: " + E);
 					// try to push asteroid
 					Asteroid a1 = null;
 					try {
@@ -475,7 +475,7 @@ public class Player implements pb.sim.Player {
 						a1.orbit.positionAt(t - a1.epoch, p1);
 						a2.orbit.positionAt(t - a2.epoch, p2);
 
-						// if collision, return push to the simulator
+						// if collision, compare it with the best push
 						if (Point.distance(p1, p2) < r) {
 							found = true;
 							onePush push = new onePush(time + wait_time, E, asteroids[i].mass,
