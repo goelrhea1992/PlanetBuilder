@@ -181,11 +181,11 @@ public class Player implements pb.sim.Player {
 				- asteroids[i].epoch);
 		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
 		double d1 = Math.atan2(v.y, v.x);
-		double E_i= asteroids[i].mass*Orbit.GM/(2*asteroids[i].orbit.a);
-		Point r = asteroids[i].orbit.positionAt(time + wait_time
-				- asteroids[i].epoch);
-		double dist = Math.sqrt(r.x * r.x + r.y * r.y);
-		double E_p = asteroids[i].mass*Orbit.GM/(dist);
+//		double E_i= asteroids[i].mass*Orbit.GM/(2*asteroids[i].orbit.a);
+//		Point r = asteroids[i].orbit.positionAt(time + wait_time
+//				- asteroids[i].epoch);
+//		double dist = Math.sqrt(r.x * r.x + r.y * r.y);
+		double E_p = asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a);
 		double e_j= Math.sqrt(asteroids[j].orbit.a*asteroids[j].orbit.a
 				-asteroids[j].orbit.b*asteroids[j].orbit.b)/asteroids[j].orbit.a;
 		double d2;
@@ -193,8 +193,8 @@ public class Player implements pb.sim.Player {
 			//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = Math.PI + d1;
 			double E_j1,E_j2;
-			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a));
-			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a/p));
+			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1+e_j)*asteroids[j].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1-e_j)*asteroids[j].orbit.a/p));
 			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
 			v_j1 = Math.abs(v_j1-v1);
 			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
@@ -211,8 +211,8 @@ public class Player implements pb.sim.Player {
 		else if ((1-e_j)*asteroids[j].orbit.a >= asteroids[i].orbit.a){
 			d2 = d1;
 			double E_j1,E_j2;
-			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a));
-			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a*p));
+			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1-e_j)*asteroids[j].orbit.a));
+			E_j2= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1+e_j)*asteroids[j].orbit.a*p));
 			double v_j1 = Math.sqrt(2*E_j1/asteroids[i].mass);
 			v_j1 = Math.abs(v_j1-v1);
 			double v_j2 = Math.sqrt(2*E_j2/asteroids[i].mass);
@@ -228,7 +228,7 @@ public class Player implements pb.sim.Player {
 		}
 		else {
 			d2 = d1;
-			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1+e_j)*asteroids[i].orbit.a*p));
+			double E_j=E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1+e_j)*asteroids[j].orbit.a*p));
 			double v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
@@ -238,7 +238,7 @@ public class Player implements pb.sim.Player {
 			}
 			
 			d2 = Math.PI + d1;
-			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+(1-e_j)*asteroids[i].orbit.a/p));
+			E_j= E_p- Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1-e_j)*asteroids[j].orbit.a/p));
 			v_j = Math.sqrt(2*E_j/asteroids[i].mass);
 			v_j = Math.abs(v_j-v1);
 			E_j = 0.5 * asteroids[i].mass * v_j * v_j;
@@ -428,7 +428,6 @@ public class Player implements pb.sim.Player {
 				Point p1 = new Point();
 				Point p2 = new Point();
 
-				// System.out.println("We're looking ahead these many years: " + multiple * time_for_finding_collision/365);
 				
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
@@ -451,9 +450,7 @@ public class Player implements pb.sim.Player {
 					if (intersections.size() == 0)
 						continue;
 					double r = a1.radius() + a2.radius();
-
-					
-
+				
 					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
