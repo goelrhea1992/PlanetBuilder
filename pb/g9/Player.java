@@ -315,6 +315,7 @@ public class Player implements pb.sim.Player {
 //		int maxIndex2 = -1;
 
 		for (int i = 0; i < asteroids.length; i++) {
+			System.out.print(asteroids[i].id + " ");
 			if (asteroids[i].id > maxID) {
 //				maxID2 = maxID;
 //				maxIndex2 = maxIndex;
@@ -326,7 +327,7 @@ public class Player implements pb.sim.Player {
 //				maxIndex2 = i;
 //			}
 		}
-
+		System.out.println();
 //		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
 			return maxIndex;
 //		else
@@ -341,18 +342,11 @@ public class Player implements pb.sim.Player {
 		}
 		num_asteroids = asteroids.length;
 		time++;
-		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
-			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
+		if (time == bestpush.time){
 
-			// System.out.println("energy: "+ bestpush.energy);
-			// System.out.println("Now Year: " + (1 + bestpush.time / 365));
-			// System.out.println("Now Day: " + (1 + bestpush.time % 365));
-			// System.out.println("Year: " + (1 + bestpush.collision_time / 365));
-			// System.out.println("Day: " + (1 + bestpush.collision_time % 365));
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 
-		 	// System.out.println("average energy: "+ average_energy);
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -369,19 +363,7 @@ public class Player implements pb.sim.Player {
 			return;
 
 		boolean found = false;
-		
-		int j = 0;
-		// first iteration
-		if (sink == -1) {
-			// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-			// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
-
-			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-			j = findCandidateOrbitsForSink(asteroids, Total_mass);
-			System.out.println("j: " + j);
-			sink = asteroids[j].id;
-			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-		}
+		int j;		
 
 		if (asteroids.length < 10)
 			// if fewer than 10 asteroids, consider all.
@@ -391,9 +373,14 @@ public class Player implements pb.sim.Player {
 			asteroidsToConsider = asteroids.length/5;
 
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
-			if (iteration != 1)
+
+			if (iteration == 1) {
+			j = findCandidateOrbitsForSink(asteroids, Total_mass);
+			sink = asteroids[j].id;
+			}
+			else {
 				j = getSinkIndex(asteroids);
-			System.out.println(j);
+			}
 
 			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider, asteroids[j]);
 			Set<Integer> set = new HashSet<Integer>();
