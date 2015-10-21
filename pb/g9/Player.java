@@ -30,6 +30,8 @@ public class Player implements pb.sim.Player {
 
 	private onePush bestpush;
 	private double Total_mass = 0;
+	private double target_mass = 0;
+	private double max_mass = 0;
 	private long max_period = 0;
 	private long wait_time = 100;
 	private double average_energy = Double.MAX_VALUE/20.0;
@@ -76,7 +78,7 @@ public class Player implements pb.sim.Player {
 
 		// look in the future for collision
 		long time_left = time_limit - time + wait_time;
-		long time_for_finding_collision = (long) (time_left / ((Total_mass - a.mass)/b.mass));
+		long time_for_finding_collision = (long) (time_left / ((target_mass - a.mass)/b.mass));
 		time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
 		long multiple = (long) (0.1 * time_left/time_for_finding_collision);
 		if (multiple < 1) 
@@ -248,46 +250,45 @@ public class Player implements pb.sim.Player {
 			}
 			return space;
 		}
-//		if (e_j!=0){
-//		}
-//		else {
-//			E_j1= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)*1-E_i);
-//			E_j2= Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[j].orbit.a+asteroids[i].orbit.a)-E_i)*2;
-//		}
-		
 	}
-
-	private double[][] find_bigger_search_space(Asteroid[] asteroids, int i, int j) {
-		int num = 30;
-		double[][] space = new double[num][2];
-		Point v = asteroids[i].orbit.velocityAt(time + wait_time
-				- asteroids[i].epoch);
-		double d1 = Math.atan2(v.y, v.x);
-		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
-
-		double d2;
-		if (asteroids[j].orbit.a < asteroids[i].orbit.a)
-			d2 = Math.PI + d1;
-		else
-			d2 = d1;
-
-		double k_min = 0.5;
-		double k_max = 0.8;
-		double k_step = 0.005;
-		int z;
-		double k;
-
-		for (k = k_min, z = 0; k < k_max; k = k + k_step, z += 1) {
-			if (z == num)
-				break;
-			double v2 = v1 * k;
-			space[z][0] = 0.5 * asteroids[i].mass * v2 * v2;
-			space[z][1] = d2;
+	private int findTargetForSink(Asteroid[] asteroids, double target_mass){
+		Comparator<Map.Entry<Asteroid, Integer>> comparator = new Comparator<Map.Entry<Asteroid, Integer>>() {
+			public int compare(Map.Entry<Asteroid, Integer> o1, Map.Entry<Asteroid, Integer> o2) {
+				return (new Double(o1.getKey().orbit.a)).compareTo( o2.getKey().orbit.a );
+			}
+		};
+		HashMap<Asteroid, Integer> asteroidSorted = new HashMap<Asteroid, Integer>();
+		for (int i = 0; i < asteroids.length; i++) {
+			asteroidSorted.put(asteroids[i], i);
 		}
-		return space;
+		ArrayList<Map.Entry<Asteroid, Integer>>  asteroidlist =	new ArrayList<Map.Entry<Asteroid, Integer>>(asteroidSorted.entrySet());
+		Collections.sort( asteroidlist, comparator);
+		double sum_mass = 0;
+		double min_value = Double.MAX_VALUE;		int i = 0, j = 0;
+		int target_index = -1;
+		
+		for(;j<asteroids.length;) {
+			for (;sum_mass<target_mass;j++){
+				sum_mass +=asteroidlist.get(j).getKey().mass;
+			}
+			for (int k=i;k<j;k++){
+				double sum_value = 0;
+				for(int kk = i;kk<j;kk++){
+					sum_value += asteroidlist.get(kk).getKey().mass*
+							Math.abs(1/asteroidlist.get(kk).getKey().orbit.a
+									-1/asteroidlist.get(k).getKey().orbit.a);
+				}
+				if (sum_value < min_value){
+					target_index = k;
+					min_value = sum_value;
+				}
+			}
+			sum_mass -=asteroidlist.get(i).getKey().mass;
+			i++;
+		}
+		return target_index;
 	}
-
-	// print orbital information
+	
 	public void init(Asteroid[] asteroids, long time_limit) {
 
 		if (Orbit.dt() != 24 * 60 * 60)
@@ -296,10 +297,16 @@ public class Player implements pb.sim.Player {
 		
 		for (int i=0;i<asteroids.length;i++){
 			Total_mass += asteroids[i].mass;
+			if (asteroids[i].mass > max_mass)
+				max_mass = asteroids[i].mass;
 			if (asteroids[i].orbit.period() > max_period)
 				max_period = asteroids[i].orbit.period();
 		}
-		System.out.println("max_period: "+max_period/365.0);
+		if (max_mass > .5*Total_mass)
+			target_mass = Total_mass;
+		else
+			target_mass = .5*Total_mass;
+		//System.out.println("max_period: "+max_period/365.0);
 		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
 	}
@@ -341,7 +348,7 @@ public class Player implements pb.sim.Player {
 		}
 		num_asteroids = asteroids.length;
 		time++;
-		if (time == bestpush.time/* && bestpush.energy< 5 * average_energy*/){
+		if (time == bestpush.time){
 			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
 
 			// System.out.println("energy: "+ bestpush.energy);
@@ -376,11 +383,13 @@ public class Player implements pb.sim.Player {
 			// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
 
 			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-			j = findCandidateOrbitsForSink(asteroids, Total_mass);
+			j = findCandidateOrbitsForSink(asteroids, target_mass);
+			j = findTargetForSink(asteroids,target_mass);
 			sink = asteroids[j].id;
 			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		}
-
+		else
+			j = getSinkIndex(asteroids);
 		if (asteroids.length < 10)
 			// if fewer than 10 asteroids, consider all.
 			asteroidsToConsider = asteroids.length - 1;
@@ -389,7 +398,6 @@ public class Player implements pb.sim.Player {
 			asteroidsToConsider = asteroids.length/5;
 
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
-			j = getSinkIndex(asteroids);
 
 			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider, asteroids[j]);
 			Set<Integer> set = new HashSet<Integer>();
@@ -414,7 +422,7 @@ public class Player implements pb.sim.Player {
 
 
 				long time_left = time_limit - time + wait_time;
-				long time_for_finding_collision = (long) (time_left / ((Total_mass - a2.mass)/asteroids[i].mass));
+				long time_for_finding_collision = (long) (time_left / ((target_mass - a2.mass)/asteroids[i].mass));
 				time_for_finding_collision = time_left < time_for_finding_collision? time_left : time_for_finding_collision;
 				long multiple = (long) (0.1 * time_left/time_for_finding_collision);
 
@@ -538,7 +546,7 @@ public class Player implements pb.sim.Player {
 		return max;
 	}
 
-	private int findCandidateOrbitsForSink(Asteroid[] asteroids, double totalMass) {
+	private int findCandidateOrbitsForSink(Asteroid[] asteroids, double target_mass) {
 		Map<Integer, Double> asteroidToRadius = new HashMap<Integer, Double>();
 		Map<Integer, Double> asteroidToRadiusSorted = new LinkedHashMap<>();
 		for (int i = 0; i < asteroids.length; i++) {
@@ -568,7 +576,7 @@ public class Player implements pb.sim.Player {
 			found = false;
 			for (j = i; j < radii.length; j++) {
 				massSum += asteroids[j].mass;
-				if (massSum >= 0.5 * totalMass) {
+				if (massSum >= target_mass) {
 					found = true;
 					break;
 				}
