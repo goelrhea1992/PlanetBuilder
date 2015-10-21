@@ -40,14 +40,11 @@ public class Player implements pb.sim.Player {
 
 	int sink = -1;
 	int asteroidsToConsider = -1;
-//	private boolean has_majority_asteroid = false;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
 		long period = a.orbit.period();
-		//if (period / 365.0 > 50) {
-		//	return intersection_list;
-		//}
+
 		if (period > 3650)
 			period = 3650;
 		double r = a.radius() + b.radius();
@@ -139,7 +136,6 @@ public class Player implements pb.sim.Player {
 			diff[1] = diff[2];
 		}
 
-		//System.out.println("  fast_find_intersection mid !");
 		t = time + wait_time + period;
 		p1 = new Point();
 		a.orbit.positionAt(t - a.epoch, p1);		
@@ -159,7 +155,6 @@ public class Player implements pb.sim.Player {
 		}
 		else if (diff[1] <= diff[2] && diff[1] <= diff[0]) {
 			for(long ft1 = ft-2*step_length;ft1 < period;ft1++){
-				//System.out.print(ft1+" ("+ft+") ");
 				t = time + wait_time + ft1;
 				p1 = new Point();
 				a.orbit.positionAt(t - a.epoch, p1);
@@ -171,29 +166,23 @@ public class Player implements pb.sim.Player {
 				}
 			}
 		}
-		//System.out.println("  fast_find_intersection end !");
 		return intersection_list;
 	}
 	private double[][] find_search_space(Asteroid[] asteroids, int i, int j, boolean bigger) {
 		double p = 1.5;
 		if (bigger)
-			p = 2.5;
+			p = 3.5;
 		int num = 30;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
 		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
 		double d1 = Math.atan2(v.y, v.x);
-//		double E_i= asteroids[i].mass*Orbit.GM/(2*asteroids[i].orbit.a);
-//		Point r = asteroids[i].orbit.positionAt(time + wait_time
-//				- asteroids[i].epoch);
-//		double dist = Math.sqrt(r.x * r.x + r.y * r.y);
 		double E_p = asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a);
 		double e_j= Math.sqrt(asteroids[j].orbit.a*asteroids[j].orbit.a
 				-asteroids[j].orbit.b*asteroids[j].orbit.b)/asteroids[j].orbit.a;
 		double d2;
 		if ((1+e_j)*asteroids[j].orbit.a <= asteroids[i].orbit.a){
-			//d2 = Math.PI + d1 + (k2 - 0.5) * Math.PI * 0.25;
 			d2 = Math.PI + d1;
 			double E_j1,E_j2;
 			E_j1= E_p-Math.abs(asteroids[i].mass*Orbit.GM/(asteroids[i].orbit.a+(1+e_j)*asteroids[j].orbit.a));
@@ -309,16 +298,8 @@ public class Player implements pb.sim.Player {
 			target_mass = Total_mass;
 		else
 			target_mass = .5*Total_mass;
-		//System.out.println("max_period: "+max_period/365.0);
 		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
-		
-//		for(int i = 0; i < asteroids.length; i++){
-//			if(asteroids[i].mass > Total_mass * 0.5f){
-//				has_majority_asteroid = true;
-//			}
-//		}
-		
 	}
 
 	/**
@@ -328,27 +309,13 @@ public class Player implements pb.sim.Player {
 		long maxID = Long.MIN_VALUE;
 		int maxIndex = -1;
 
-//		long maxID2 = Long.MIN_VALUE;
-//		int maxIndex2 = -1;
-
 		for (int i = 0; i < asteroids.length; i++) {
-//			System.out.print(asteroids[i].id + " ");
 			if (asteroids[i].id > maxID) {
-//				maxID2 = maxID;
-//				maxIndex2 = maxIndex;
 				maxID = asteroids[i].id;
 				maxIndex = i;
 			}
-//			else if (asteroids[i].id > maxID2) {
-//				maxID2 = asteroids[i].id;
-//				maxIndex2 = i;
-//			}
 		}
-		// System.out.println();
-//		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
-			return maxIndex;
-//		else
-//			return maxIndex2;
+		return maxIndex;
 	}
 
 	// try to push asteroid
@@ -381,17 +348,12 @@ public class Player implements pb.sim.Player {
 
 		boolean found = false;
 		int j;
+
 		// first iteration
-		if (iteration == 1){
+		if (iteration == 1) {
 			if (sink == -1) {
-				// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-				// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
-				
-				// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-				//j = findCandidateOrbitsForSink(asteroids, target_mass);
 				j = findTargetForSink(asteroids,target_mass);
 				sink = j;
-				System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 			}
 			else
 				j = sink;
@@ -418,15 +380,15 @@ public class Player implements pb.sim.Player {
 					continue;
 				double[][] search_space;
 				if (retry > 1) {
-					// System.out.println("Retry " + retry + ": USING BIGGER SEARCH SPACE");
+					// Using bigger search space
 					search_space = find_search_space(asteroids, i, j,true);
 				}
 				else {
-					// System.out.println("Retry " + retry + ": USING SMALLER SEARCH SPACE");
+					// Using smaller search space
 					search_space = find_search_space(asteroids,i,j,false);
 				}
 
-				// search for collision with any other asteroids
+				// search for collision with any other favorable asteroids
 				Asteroid a2 = asteroids[j];
 
 
@@ -445,15 +407,12 @@ public class Player implements pb.sim.Player {
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
 					double d2 = search_space[k][1];
-					// System.out.println("Energy: " + E);
 					// try to push asteroid
 					Asteroid a1 = null;
 					try {
 						a1 = Asteroid.push(asteroids[i], time + wait_time
 								- asteroids[i].epoch, E, d2);
 					} catch (InvalidOrbitException e) {
-						//System.out.println("  Invalid orbit: ");
-//							+ e.getMessage());
 						continue;
 					}
 
@@ -464,7 +423,6 @@ public class Player implements pb.sim.Player {
 						continue;
 					double r = a1.radius() + a2.radius();
 				
-					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
 						long t = time + wait_time + ft;
@@ -494,308 +452,46 @@ public class Player implements pb.sim.Player {
 			if (found) 
 				break;
 		}
-		// System.out.println();
 		time_of_push = time + turns_per_retry;
 	}
 
-	// private List<Integer> findMiddleOrbits(Asteroid[] asteroids) {
-	// 	Map<Double, Integer> radiusToIndexUnsorted = new HashMap<Double, Integer>();
-
-	// 	for (int i = 0; i < asteroids.length; i++) {
-	// 		radiusToIndexUnsorted.put(asteroids[i].radius(), i);
-	// 	}
-
-	// 	Map<Double, Integer> radiusToIndex = new TreeMap<Double, Integer>(radiusToIndexUnsorted);
-
-	// 	int i = 0;
-	// 	int n = asteroids.length;
-	// 	Iterator<Map.Entry<Double, Integer>> iter = radiusToIndex.entrySet().iterator();
-	// 	List<Integer> desiredOrbits = new ArrayList<Integer>();
-	// 	while (i < (n/2) - (n/10)) {
-	// 		if (iter.hasNext())
-	// 			iter.next();
-	// 		i++;
-	// 	}
-	// 	// keep the 20% asteroids beyond the median and 10% below the median
-	// 	while (i <= (n/2) + (n/5)) {
-	// 		if (iter.hasNext())
-	// 			desiredOrbits.add(iter.next().getValue());
-	// 		i++;
-	// 	}
-	// 	return desiredOrbits;
-	// }
-
-	private int getHeaviestAsteroidAmong(Asteroid asteroids[], List<Integer> desiredOrbits) {
-		int max = 0;
-		double mass = 0.0;
-		double maxMass = Double.MIN_VALUE;
-
-		for (int i: desiredOrbits) {
-			mass = asteroids[i].mass;
-			if (mass > maxMass) {
-				max = i;
-				maxMass = mass;
+	private boolean CheckIncidentalCollisions(onePush push, Asteroid[] asteroids, Asteroid a1){
+		Asteroid newAst = a1;
+		
+		Point newAstPos;
+		Point otherAstPos;
+		
+		for(int i = 0; i < asteroids.length; i++){
+			long pushTime = push.time;
+			if(asteroids[i].id == newAst.id || asteroids[i].id == push.asteroidCollidedId){
+				continue;
 			}
-		}
-		return max;
-	}
+			HashSet<Long> timelist = new HashSet<Long>();
+			fast_find_intersection(newAst,asteroids[i], timelist);
+			for(;pushTime <= push.collision_time;pushTime++){
 
-	private int getHeaviestAsteroid(Asteroid asteroids[]) {
-		int max = 0;
-		double mass = 0.0;
-		double maxMass = Double.MIN_VALUE;
-
-		for (int i = 0; i < asteroids.length; i++) {
-			mass = asteroids[i].mass;
-			if (mass > maxMass) {
-				max = i;
-				maxMass = mass;
-			}
-		}
-		return max;
-	}
-
-	private int findCandidateOrbitsForSink(Asteroid[] asteroids, double target_mass) {
-		Map<Integer, Double> asteroidToRadius = new HashMap<Integer, Double>();
-		Map<Integer, Double> asteroidToRadiusSorted = new LinkedHashMap<>();
-		for (int i = 0; i < asteroids.length; i++) {
-			asteroidToRadius.put(i, asteroids[i].orbit.a);
-		}
-
-		asteroidToRadiusSorted = sortByValue(asteroidToRadius);
-
-		Map<Integer, Integer> radiusIndexToAsteroid = new HashMap<Integer, Integer>();
-		int i = 0;
-		double[] radii = new double[asteroids.length];
-
-		// System.out.println("The radii are: ");
-		for (Map.Entry<Integer, Double> entry: asteroidToRadiusSorted.entrySet()) {
-			radiusIndexToAsteroid.put(i, entry.getKey());
-			radii[i] = entry.getValue();
-			// System.out.println(radii[i] + " --- asteroid id is: " + entry.getKey());
-			i++;
-			
-		}
-		// System.out.println();
-
-		double minMetricSum = Double.MAX_VALUE;
-		int bestI = 0;
-		int bestJ = 0;
-		int j, k;
-		boolean found;
-
-		for (i = 0; i < radii.length; i++) {
-			double massSum = 0.0;
-			found = false;
-			for (j = i; j < radii.length; j++) {
-				massSum += asteroids[j].mass;
-				if (massSum >= target_mass) {
-					found = true;
-					break;
-				}
-			}
-			if (found) {
-				// System.out.println("So this range is: [" + i + ", " + j + "]");
-				int median = (j - i)/2;
-				double thisMetricSum = 0.0;
-
-				for (k = i; k <= j; k++) {
-					thisMetricSum += Math.abs((1/radii[k]) - (1/radii[median]));
-				}
-				// System.out.println("This metric sum is: " + thisMetricSum);
-				if (thisMetricSum <= minMetricSum) {
-					minMetricSum = thisMetricSum;
-					bestI = i;
-					bestJ = j;
-				}
-				// System.out.println("Best sum so far: " + minMetricSum + " for range ["+ bestI + ", " + bestJ + "]");
-			}
-			// System.out.println();
-		}
-
-		int bestMedian = (bestJ - bestI) / 2;
-		// System.out.println("Best i: " + bestI);
-		// System.out.println("Best j: " + bestJ);
-		// System.out.println("Best median: " + bestMedian);
-
-		// System.out.println("Chosen asteroid is: " + radiusIndexToAsteroid.get(bestMedian) + " at radius number " + bestMedian);
-		return radiusIndexToAsteroid.get(bestMedian);
-		// List<Integer> desiredOrbits = new ArrayList<Integer>();
-		// for (k = bestI; k <= bestJ; k++) {
-		// 	desiredOrbits.add(radiusIndexToAsteroid.get(k));
-		// }
-
-		// return desiredOrbits;
-
-	}
-
-	public static <Integer, Double extends Comparable<Double>> Map<Integer, Double> sortByValue( Map<Integer, Double> map )
-	{
-	    List<Map.Entry<Integer, Double>> list =
-	        new LinkedList<>( map.entrySet() );
-	    Collections.sort( list, new Comparator<Map.Entry<Integer, Double>>()
-	    {
-	        @Override
-	        public int compare( Map.Entry<Integer, Double> o1, Map.Entry<Integer, Double> o2 )
-	        {
-	            return (o1.getValue()).compareTo( o2.getValue() );
-	        }
-	    } );
-
-	    Map<Integer, Double> result = new LinkedHashMap<>();
-	    for (Map.Entry<Integer, Double> entry : list)
-	    {
-	        result.put( entry.getKey(), entry.getValue() );
-	    }
-	    return result;
-	}
-
-
-	private int getHighestWeightAsteroid(Asteroid asteroids[]) {
-		/** 
-		* Returns the index of the asteroid with the maximum distance to mass ratio.
-		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
-		**/
-
-		int max = 0;
-		double distance = 0.0;
-		double mass = 0.0;
-		double weight = 0.0;
-		double maxWeight = Double.MIN_VALUE;
-
-		for (int i = 0; i < asteroids.length; i++) {
-
-			Asteroid a = asteroids[i];
-			Point a_center = new Point();
-			a.orbit.positionAt(time - a.epoch, a_center);
-			distance = Double
-					.valueOf(Point.distance(a_center, new Point(0, 0)));
-			mass = asteroids[i].mass;
-			weight = distance / mass;
-			if (weight > maxWeight) {
-				max = i;
-				maxWeight = weight;
-			}
-		}
-		return max;
-	}
-
-	private List<Integer> getKLowestWeight(Asteroid[] asteroids, int k) {
-		double[] weights = new double[asteroids.length];
-		double distance = 0.0;
-		double mass = 0.0;
-
-		for (int i = 0; i < asteroids.length; i++) {
-			Asteroid a = asteroids[i];
-			Point a_center = new Point();
-			a.orbit.positionAt(time - a.epoch, a_center);
-			distance = Double
-					.valueOf(Point.distance(a_center, new Point(0, 0)));
-			mass = asteroids[i].mass;
-			weights[i] = distance / mass;
-		}
-
-		List<Integer> lowestKIndices;
-		double[] temp = new double[k];
-		double maxWeight = Integer.MIN_VALUE;
-		int maxIndex = -1;
-		Integer[] tempIndexInWeights = new Integer[k];
-
-		// put k weights in temp, and keep track of max seen so far
-		for (int i = 0; i < k; i++) {
-			temp[i] = weights[i];
-			tempIndexInWeights[i] = i;
-			if (temp[i] > maxWeight) {
-				maxWeight = temp[i];
-				maxIndex = i;
-			}
-		}
-
-		// check remaining weights and maintain lowest k in temp
-		for (int i = k; i < weights.length; i++) {
-			if (weights[i] < maxWeight) {
-				// replace the max so far with this value
-				temp[maxIndex] = weights[i];
-				tempIndexInWeights[maxIndex] = i;
-
-				//find new max
-				maxWeight = Double.MIN_VALUE;
-				maxIndex = -1;
-
-				for (int j = 0; j< k; j++) {
-					if (temp[j] > maxWeight) {
-						maxWeight = temp[j];
-						maxIndex = j;
-					}
+				if (!timelist.contains(pushTime%a1.orbit.period()))
+					continue;
+				newAstPos   = newAst.orbit.positionAt(pushTime - newAst.epoch) ;
+				otherAstPos = asteroids[i].orbit.positionAt(pushTime - asteroids[i].epoch); 
+				if(Point.distance(newAstPos , otherAstPos) < newAst.radius() + asteroids[i].radius()){
+					System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
+					return false;
 				}
 			}
 		}
-		lowestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
-		return lowestKIndices;
+		
+		return true;
+		
 	}
-	
-	private List<Integer> getKHighestWeightEuclideanDistance(Asteroid[] asteroids, int k, Asteroid target) {
-		double[] weights = new double[asteroids.length];
-		double distance = 0.0;
-		double distanceToTarget = 0.0;
-		double diistanceBetweenOrbits = 0.0;
-		double mass = 0.0;
 
-		for (int i = 0; i < asteroids.length; i++) {
-			Asteroid a = asteroids[i];
-			Point a_center = new Point();
-			a.orbit.positionAt(time - a.epoch, a_center);
-			Point target_center = new Point();
-			target.orbit.positionAt(time - target.epoch, target_center);
-			distance = Double
-					.valueOf(Point.distance(a_center, new Point(0, 0)));
-			distanceToTarget = Double
-					.valueOf(Point.distance(a_center, target_center));
-			diistanceBetweenOrbits = Math.abs(a.orbit.a - target.orbit.a);
-			mass = asteroids[i].mass;
-			weights[i] = distance / (mass * distanceToTarget);
-		}
-
-		List<Integer> highestKIndices;
-		double[] temp = new double[k];
-		double minWeight = Integer.MAX_VALUE;
-		int minIndex = -1;
-		Integer[] tempIndexInWeights = new Integer[k];
-
-		// put k weights in temp, and keep track of max seen so far
-		for (int i = 0; i < k; i++) {
-			temp[i] = weights[i];
-			tempIndexInWeights[i] = i;
-			if (temp[i] < minWeight) {
-				minWeight = temp[i];
-				minIndex = i;
-			}
-		}
-
-		// check remaining weights and maintain lowest k in temp
-		for (int i = k; i < weights.length; i++) {
-			if (weights[i] > minWeight) {
-				// replace the max so far with this value
-				temp[minIndex] = weights[i];
-				tempIndexInWeights[minIndex] = i;
-
-				//find new max
-				minWeight = Double.MAX_VALUE;
-				minIndex = -1;
-
-				for (int j = 0; j< k; j++) {
-					if (temp[j] < minWeight) {
-						minWeight = temp[j];
-						minIndex = j;
-					}
-				}
-			}
-		}
-		highestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
-		return highestKIndices;
-	}
+	/** 
+	* Returns the indices of the K asteroids with the maximum distance to mass ratio, multiplied by 1/distance between orbits.
+	* (Higher the distance mass ratio and lesser the orbit distance, more "pushable" the asteroid - costs less energy)
+	**/
 
 	private List<Integer> getKHighestWeightOrbitDistance(Asteroid[] asteroids, int k, Asteroid target) {
+		
 		double[] weights = new double[asteroids.length];
 		double distance = 0.0;
 		double distanceToTarget = 0.0;
@@ -856,135 +552,6 @@ public class Player implements pb.sim.Player {
 		highestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
 		return highestKIndices;
 	}
-	private int getLowestWeightAsteroid(Asteroid[] asteroids) {
-		/** 
-		* Returns the index of the asteroid with the minimum distance to mass ratio.
-		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
-		* 
-		* Hence, it is not good to push the one with the lowest distance to mass ratio.
-		* because it is too close to the sun, and too heavy.
-		**/
-
-		int min = 0;
-		double distance = 0.0;
-		double mass = 0.0;
-		double weight = 0.0;
-		double minWeight = Double.MAX_VALUE;
-
-		for (int i = 0; i < asteroids.length; i++) {
-
-			Asteroid a = asteroids[i];
-			Point a_center = new Point();
-			a.orbit.positionAt(time - a.epoch, a_center);
-			distance = Double
-					.valueOf(Point.distance(a_center, new Point(0, 0)));
-			mass = asteroids[i].mass;
-			weight = distance / mass;
-			if (weight < minWeight) {
-				min = i;
-				minWeight = weight;
-			}
-		}
-		return min;
-	}
-
-	private int getMinDistanceTime(Asteroid a, Asteroid  b) {
-		/**
-		* Returns the time at which the Euclidean distance between asteroids is minimized.
-		**/
-
-		double minDistance = -1;
-		int minDistTime = Integer.MAX_VALUE;
-		for(int t = 0; t < 20*365; t++){
-			double distance = Point.distance(a.orbit.positionAt((long)t - a.epoch),b.orbit.positionAt((long)t - b.epoch));
-			if(distance < minDistance){
-				minDistance = distance;
-				minDistTime = t;
-			}			
-		}
-		return minDistTime;
-	} 
-	
-	private void attemptCollisions(Asteroid a, Asteroid b, int minDistTime){
-		// Calculate which needs to be pushed
-		Point posA = a.orbit.positionAt((long)minDistTime - a.epoch - 365);
-		Point posB = b.orbit.positionAt((long)minDistTime - b.epoch);		
-		// For now, just push "a"
-		boolean didPush = false;
-		// Create vector that draws a line from location of push to where I 
-		// want the intersection to take place
-		Point dirVector = new Point(posB.x - posA.x, posB.y - posA.y);
-		double dir = dirVector.direction();
-		Point v = a.orbit.velocityAt((long)minDistTime - a.epoch - 365);
-		double v1 = Math.sqrt(v.x * v.x + v.y * v.y);
-		double r = a.radius() + b.radius();
-		Point newPos;
-		for(int i = 0; i < 500; i++){
-			double v2 = v1 * ((1+i/100f));
-			double E = 0.5 * a.mass * v2 * v2;
-			Asteroid testAst = pushTest(a, minDistTime - 365, E, dir);
-			newPos = testAst.orbit.positionAt((long)minDistTime - testAst.epoch);
-			if (Point.distance(posB, newPos) < r){
-				// System.out.println("Good push!");
-				Asteroid.push(a, minDistTime - 365, E, dir);
-				didPush = true;
-				break;
-			} 
-			
-		}
-		if(didPush == false){
-			System.out.println("Could not find good push!");			
-		}
-	}
-	
-	private boolean CheckIncidentalCollisions(onePush push, Asteroid[] asteroids, Asteroid a1){
-		Asteroid newAst = a1;
-		
-		Point newAstPos;
-		Point otherAstPos;
-		
-		for(int i = 0; i < asteroids.length; i++){
-			long pushTime = push.time;
-			if(asteroids[i].id == newAst.id || asteroids[i].id == push.asteroidCollidedId){
-				continue;
-			}
-			HashSet<Long> timelist = new HashSet<Long>();
-			fast_find_intersection(newAst,asteroids[i], timelist);
-			for(;pushTime <= push.collision_time;pushTime++){
-
-				if (!timelist.contains(pushTime%a1.orbit.period()))
-					continue;
-				newAstPos   = newAst.orbit.positionAt(pushTime - newAst.epoch) ;
-				otherAstPos = asteroids[i].orbit.positionAt(pushTime - asteroids[i].epoch); 
-				if(Point.distance(newAstPos , otherAstPos) < newAst.radius() + asteroids[i].radius()){
-					System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
-					return false;
-				}
-			}
-		}
-		
-		return true;
-		
-	}
-	public static Asteroid pushTest(Asteroid asteroid, long time,
-            double energy, double direction)
-	{
-		if (Double.isNaN(energy) || Double.isInfinite(energy)
-		             || energy < 0.0)
-		throw new IllegalArgumentException("Invalid energy");
-		if (Double.isNaN(direction) || Double.isInfinite(direction))
-		throw new IllegalArgumentException("Invalid direction");
-		// find current position and velocity of asteroid
-		long t = time - asteroid.epoch;
-		Point r = asteroid.orbit.positionAt(t);
-		Point v = asteroid.orbit.velocityAt(t);
-		// translate push energy to velocity and combine
-		double magnitude = Math.sqrt(2.0 * energy / asteroid.mass);
-		v.x += magnitude * Math.cos(direction);
-		v.y += magnitude * Math.sin(direction);
-		// return (new object of) the "same" asteroid with new orbit
-		return new Asteroid(new Orbit(r, v), asteroid.mass, time);
-	}
 
 	
 }
@@ -1028,3 +595,5 @@ class onePush {
 		
 	}
 }
+
+
