@@ -360,6 +360,7 @@ public class Player implements pb.sim.Player {
 		 	// do not push again until collision happens
 		 	time_of_push = bestpush.collision_time + 1;
 		 	bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
+		 	iteration++;
 		 	return;
 		}
 			
@@ -369,7 +370,7 @@ public class Player implements pb.sim.Player {
 
 		boolean found = false;
 		
-		int j;
+		int j = 0;
 		// first iteration
 		if (sink == -1) {
 			// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
@@ -377,6 +378,7 @@ public class Player implements pb.sim.Player {
 
 			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
 			j = findCandidateOrbitsForSink(asteroids, Total_mass);
+			System.out.println("j: " + j);
 			sink = asteroids[j].id;
 			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		}
@@ -389,7 +391,9 @@ public class Player implements pb.sim.Player {
 			asteroidsToConsider = asteroids.length/5;
 
 		for (int retry = 1; retry <= retries_per_turn; ++retry) {
-			j = getSinkIndex(asteroids);
+			if (iteration != 1)
+				j = getSinkIndex(asteroids);
+			System.out.println(j);
 
 			List<Integer> favorableAsteroidsOrbitDistance = getKHighestWeightOrbitDistance(asteroids, asteroidsToConsider, asteroids[j]);
 			Set<Integer> set = new HashSet<Integer>();
@@ -554,11 +558,15 @@ public class Player implements pb.sim.Player {
 		int i = 0;
 		double[] radii = new double[asteroids.length];
 
+		System.out.println("The radii are: ");
 		for (Map.Entry<Integer, Double> entry: asteroidToRadiusSorted.entrySet()) {
 			radiusIndexToAsteroid.put(i, entry.getKey());
 			radii[i] = entry.getValue();
+			System.out.println(radii[i] + " --- asteroid id is: " + entry.getKey());
 			i++;
+			
 		}
+		System.out.println();
 
 		double minMetricSum = Double.MAX_VALUE;
 		int bestI = 0;
@@ -600,7 +608,7 @@ public class Player implements pb.sim.Player {
 		// System.out.println("Best j: " + bestJ);
 		// System.out.println("Best median: " + bestMedian);
 
-		
+		System.out.println("Chosen asteroid is: " + radiusIndexToAsteroid.get(bestMedian) + " at radius number " + bestMedian);
 		return radiusIndexToAsteroid.get(bestMedian);
 		// List<Integer> desiredOrbits = new ArrayList<Integer>();
 		// for (k = bestI; k <= bestJ; k++) {
