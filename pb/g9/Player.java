@@ -175,7 +175,7 @@ public class Player implements pb.sim.Player {
 		double p = 1.5;
 		if (bigger)
 			p = 2.5;
-		int num = 50;
+		int num = 30;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
@@ -258,7 +258,7 @@ public class Player implements pb.sim.Player {
 	}
 
 	private double[][] find_bigger_search_space(Asteroid[] asteroids, int i, int j) {
-		int num = 50;
+		int num = 30;
 		double[][] space = new double[num][2];
 		Point v = asteroids[i].orbit.velocityAt(time + wait_time
 				- asteroids[i].epoch);
@@ -372,9 +372,13 @@ public class Player implements pb.sim.Player {
 		int j;
 		// first iteration
 		if (sink == -1) {
-			List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-			j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+			// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
+			// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
+
+			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+			j = findCandidateOrbitsForSink(asteroids, Total_mass);
 			sink = asteroids[j].id;
+			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		}
 
 		if (asteroids.length < 10)
@@ -420,7 +424,6 @@ public class Player implements pb.sim.Player {
 				Point p1 = new Point();
 				Point p2 = new Point();
 
-				//System.out.println("We're looking ahead these many years: " + multiple * time_for_finding_collision/365);
 				
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
@@ -443,9 +446,7 @@ public class Player implements pb.sim.Player {
 					if (intersections.size() == 0)
 						continue;
 					double r = a1.radius() + a2.radius();
-
-					
-
+				
 					// System.out.println("time left: " + time_left + ", time to look ahead is: " + time_for_finding_collision + ", MULTIPLE IS: " + multiple);
 					for (long ft = 0; ft < multiple * time_for_finding_collision; ++ft) {
 
@@ -480,32 +481,32 @@ public class Player implements pb.sim.Player {
 		time_of_push = time + turns_per_retry;
 	}
 
-	private List<Integer> findMiddleOrbits(Asteroid[] asteroids) {
-		Map<Double, Integer> radiusToIndexUnsorted = new HashMap<Double, Integer>();
+	// private List<Integer> findMiddleOrbits(Asteroid[] asteroids) {
+	// 	Map<Double, Integer> radiusToIndexUnsorted = new HashMap<Double, Integer>();
 
-		for (int i = 0; i < asteroids.length; i++) {
-			radiusToIndexUnsorted.put(asteroids[i].radius(), i);
-		}
+	// 	for (int i = 0; i < asteroids.length; i++) {
+	// 		radiusToIndexUnsorted.put(asteroids[i].radius(), i);
+	// 	}
 
-		Map<Double, Integer> radiusToIndex = new TreeMap<Double, Integer>(radiusToIndexUnsorted);
+	// 	Map<Double, Integer> radiusToIndex = new TreeMap<Double, Integer>(radiusToIndexUnsorted);
 
-		int i = 0;
-		int n = asteroids.length;
-		Iterator<Map.Entry<Double, Integer>> iter = radiusToIndex.entrySet().iterator();
-		List<Integer> desiredOrbits = new ArrayList<Integer>();
-		while (i < (n/2) - (n/10)) {
-			if (iter.hasNext())
-				iter.next();
-			i++;
-		}
-		// keep the 20% asteroids beyond the median and 10% below the median
-		while (i <= (n/2) + (n/5)) {
-			if (iter.hasNext())
-				desiredOrbits.add(iter.next().getValue());
-			i++;
-		}
-		return desiredOrbits;
-	}
+	// 	int i = 0;
+	// 	int n = asteroids.length;
+	// 	Iterator<Map.Entry<Double, Integer>> iter = radiusToIndex.entrySet().iterator();
+	// 	List<Integer> desiredOrbits = new ArrayList<Integer>();
+	// 	while (i < (n/2) - (n/10)) {
+	// 		if (iter.hasNext())
+	// 			iter.next();
+	// 		i++;
+	// 	}
+	// 	// keep the 20% asteroids beyond the median and 10% below the median
+	// 	while (i <= (n/2) + (n/5)) {
+	// 		if (iter.hasNext())
+	// 			desiredOrbits.add(iter.next().getValue());
+	// 		i++;
+	// 	}
+	// 	return desiredOrbits;
+	// }
 
 	private int getHeaviestAsteroidAmong(Asteroid asteroids[], List<Integer> desiredOrbits) {
 		int max = 0;
@@ -536,6 +537,98 @@ public class Player implements pb.sim.Player {
 		}
 		return max;
 	}
+
+	private int findCandidateOrbitsForSink(Asteroid[] asteroids, double totalMass) {
+		Map<Integer, Double> asteroidToRadius = new HashMap<Integer, Double>();
+		Map<Integer, Double> asteroidToRadiusSorted = new LinkedHashMap<>();
+		for (int i = 0; i < asteroids.length; i++) {
+			asteroidToRadius.put(i, asteroids[i].orbit.a);
+		}
+
+		asteroidToRadiusSorted = sortByValue(asteroidToRadius);
+
+		Map<Integer, Integer> radiusIndexToAsteroid = new HashMap<Integer, Integer>();
+		int i = 0;
+		double[] radii = new double[asteroids.length];
+
+		for (Map.Entry<Integer, Double> entry: asteroidToRadiusSorted.entrySet()) {
+			radiusIndexToAsteroid.put(i, entry.getKey());
+			radii[i] = entry.getValue();
+			i++;
+		}
+
+		double minMetricSum = Double.MAX_VALUE;
+		int bestI = 0;
+		int bestJ = 0;
+		int j, k;
+		boolean found;
+
+		for (i = 0; i < radii.length; i++) {
+			double massSum = 0.0;
+			found = false;
+			for (j = i; j < radii.length; j++) {
+				massSum += asteroids[j].mass;
+				if (massSum >= 0.5 * totalMass) {
+					found = true;
+					break;
+				}
+			}
+			if (found) {
+				// System.out.println("So this range is: [" + i + ", " + j + "]");
+				int median = (j - i)/2;
+				double thisMetricSum = 0.0;
+
+				for (k = i; k <= j; k++) {
+					thisMetricSum += Math.abs((1/radii[k]) - (1/radii[median]));
+				}
+				// System.out.println("This metric sum is: " + thisMetricSum);
+				if (thisMetricSum <= minMetricSum) {
+					minMetricSum = thisMetricSum;
+					bestI = i;
+					bestJ = j;
+				}
+				// System.out.println("Best sum so far: " + minMetricSum + " for range ["+ bestI + ", " + bestJ + "]");
+			}
+			// System.out.println();
+		}
+
+		int bestMedian = (bestJ - bestI) / 2;
+		// System.out.println("Best i: " + bestI);
+		// System.out.println("Best j: " + bestJ);
+		// System.out.println("Best median: " + bestMedian);
+
+		
+		return radiusIndexToAsteroid.get(bestMedian);
+		// List<Integer> desiredOrbits = new ArrayList<Integer>();
+		// for (k = bestI; k <= bestJ; k++) {
+		// 	desiredOrbits.add(radiusIndexToAsteroid.get(k));
+		// }
+
+		// return desiredOrbits;
+
+	}
+
+	public static <Integer, Double extends Comparable<Double>> Map<Integer, Double> sortByValue( Map<Integer, Double> map )
+	{
+	    List<Map.Entry<Integer, Double>> list =
+	        new LinkedList<>( map.entrySet() );
+	    Collections.sort( list, new Comparator<Map.Entry<Integer, Double>>()
+	    {
+	        @Override
+	        public int compare( Map.Entry<Integer, Double> o1, Map.Entry<Integer, Double> o2 )
+	        {
+	            return (o1.getValue()).compareTo( o2.getValue() );
+	        }
+	    } );
+
+	    Map<Integer, Double> result = new LinkedHashMap<>();
+	    for (Map.Entry<Integer, Double> entry : list)
+	    {
+	        result.put( entry.getKey(), entry.getValue() );
+	    }
+	    return result;
+	}
+
 
 	private int getHighestWeightAsteroid(Asteroid asteroids[]) {
 		/** 
