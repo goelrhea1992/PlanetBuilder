@@ -38,7 +38,7 @@ public class Player implements pb.sim.Player {
 	private int push_times = 0;
 	private int num_asteroids = 0;
 
-	long sink = -1;
+	int sink = -1;
 	int asteroidsToConsider = -1;
 //	private boolean has_majority_asteroid = false;
 
@@ -375,6 +375,7 @@ public class Player implements pb.sim.Player {
 		 	// do not push again until collision happens
 		 	time_of_push = bestpush.collision_time + 1;
 		 	bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
+		 	iteration++;
 		 	return;
 		}
 			
@@ -386,15 +387,19 @@ public class Player implements pb.sim.Player {
 		
 		int j;
 		// first iteration
-		if (sink == -1) {
-			// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-			// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
-
-			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
-			j = findCandidateOrbitsForSink(asteroids, target_mass);
-			j = findTargetForSink(asteroids,target_mass);
-			sink = asteroids[j].id;
-			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		if (iteration == 1){
+			if (sink == -1) {
+				// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
+				// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
+				
+				// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+				//j = findCandidateOrbitsForSink(asteroids, target_mass);
+				j = findTargetForSink(asteroids,target_mass);
+				sink = j;
+				System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			}
+			else
+				j = sink;
 		}
 		else
 			j = getSinkIndex(asteroids);
