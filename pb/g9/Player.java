@@ -389,7 +389,7 @@ public class Player implements pb.sim.Player {
 		
 		if (asteroids.length < 10)
 			// if fewer than 10 asteroids, consider all.
-			asteroidsToConsider = asteroids.length - 1;
+			asteroidsToConsider = asteroids.length;
 		else
 			// if more than 10 asteorids, consider 20%
 			asteroidsToConsider = asteroids.length/5;
