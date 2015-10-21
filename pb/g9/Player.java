@@ -332,6 +332,7 @@ public class Player implements pb.sim.Player {
 //		int maxIndex2 = -1;
 
 		for (int i = 0; i < asteroids.length; i++) {
+//			System.out.print(asteroids[i].id + " ");
 			if (asteroids[i].id > maxID) {
 //				maxID2 = maxID;
 //				maxIndex2 = maxIndex;
@@ -343,7 +344,7 @@ public class Player implements pb.sim.Player {
 //				maxIndex2 = i;
 //			}
 		}
-
+		// System.out.println();
 //		if (asteroids[maxIndex].mass >= asteroids[maxIndex2].mass)
 			return maxIndex;
 //		else
@@ -359,15 +360,10 @@ public class Player implements pb.sim.Player {
 		num_asteroids = asteroids.length;
 		time++;
 		if (time == bestpush.time){
-			// System.out.println("energy: "+ bestpush.energy);
-			// System.out.println("Now Year: " + (1 + bestpush.time / 365));
-			// System.out.println("Now Day: " + (1 + bestpush.time % 365));
-			// System.out.println("will collide at Year: " + (1 + bestpush.collision_time / 365));
-			// System.out.println("will collide at Day: " + (1 + bestpush.collision_time % 365));
+
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 
-		 	// System.out.println("average energy: "+ average_energy);
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
@@ -384,7 +380,6 @@ public class Player implements pb.sim.Player {
 			return;
 
 		boolean found = false;
-		
 		int j;
 		// first iteration
 		if (iteration == 1){
@@ -403,6 +398,7 @@ public class Player implements pb.sim.Player {
 		}
 		else
 			j = getSinkIndex(asteroids);
+		
 		if (asteroids.length < 10)
 			// if fewer than 10 asteroids, consider all.
 			asteroidsToConsider = asteroids.length - 1;
@@ -572,11 +568,15 @@ public class Player implements pb.sim.Player {
 		int i = 0;
 		double[] radii = new double[asteroids.length];
 
+		// System.out.println("The radii are: ");
 		for (Map.Entry<Integer, Double> entry: asteroidToRadiusSorted.entrySet()) {
 			radiusIndexToAsteroid.put(i, entry.getKey());
 			radii[i] = entry.getValue();
+			// System.out.println(radii[i] + " --- asteroid id is: " + entry.getKey());
 			i++;
+			
 		}
+		// System.out.println();
 
 		double minMetricSum = Double.MAX_VALUE;
 		int bestI = 0;
@@ -618,7 +618,7 @@ public class Player implements pb.sim.Player {
 		// System.out.println("Best j: " + bestJ);
 		// System.out.println("Best median: " + bestMedian);
 
-		
+		// System.out.println("Chosen asteroid is: " + radiusIndexToAsteroid.get(bestMedian) + " at radius number " + bestMedian);
 		return radiusIndexToAsteroid.get(bestMedian);
 		// List<Integer> desiredOrbits = new ArrayList<Integer>();
 		// for (k = bestI; k <= bestJ; k++) {
