@@ -373,9 +373,12 @@ public class Player implements pb.sim.Player {
 		// first iteration
 		if (sink == -1) {
 			// List<Integer> desiredOrbits = findMiddleOrbits(asteroids);
-			List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
-			j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+			// List<Integer> desiredOrbits = findCandidateOrbitsForSink(asteroids);
+
+			// j = getHeaviestAsteroidAmong(asteroids, desiredOrbits);
+			j = findCandidateOrbitsForSink(asteroids, Total_mass);
 			sink = asteroids[j].id;
+			System.out.println("Sink no whas value!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		}
 
 		if (asteroids.length < 10)
@@ -421,7 +424,7 @@ public class Player implements pb.sim.Player {
 				Point p1 = new Point();
 				Point p2 = new Point();
 
-				System.out.println("We're looking ahead these many years: " + multiple * time_for_finding_collision/365);
+				// System.out.println("We're looking ahead these many years: " + multiple * time_for_finding_collision/365);
 				
 				for (int k = 0; k <search_space.length; k ++) {
 					double E = search_space[k][0];
@@ -538,7 +541,7 @@ public class Player implements pb.sim.Player {
 		return max;
 	}
 
-	private List<Integer> findCandidateOrbitsForSink(Asteroid[] asteroids) {
+	private int findCandidateOrbitsForSink(Asteroid[] asteroids, double totalMass) {
 		Map<Integer, Double> asteroidToRadius = new HashMap<Integer, Double>();
 		Map<Integer, Double> asteroidToRadiusSorted = new LinkedHashMap<>();
 		for (int i = 0; i < asteroids.length; i++) {
@@ -561,33 +564,50 @@ public class Player implements pb.sim.Player {
 		int bestI = 0;
 		int bestJ = 0;
 		int j, k;
+		boolean found;
+
 		for (i = 0; i < radii.length; i++) {
 			double massSum = 0.0;
+			found = false;
 			for (j = i; j < radii.length; j++) {
 				massSum += asteroids[j].mass;
-				if (massSum >= 50)
+				if (massSum >= 0.5 * totalMass) {
+					found = true;
 					break;
+				}
 			}
-			int median = (j - i)/2;
-			double thisMetricSum = 0.0;
+			if (found) {
+				// System.out.println("So this range is: [" + i + ", " + j + "]");
+				int median = (j - i)/2;
+				double thisMetricSum = 0.0;
 
-			for (k = i; k <= j; k++) {
-				thisMetricSum += Math.abs((1/radii[k]) - (1/radii[median]));
+				for (k = i; k <= j; k++) {
+					thisMetricSum += Math.abs((1/radii[k]) - (1/radii[median]));
+				}
+				// System.out.println("This metric sum is: " + thisMetricSum);
+				if (thisMetricSum <= minMetricSum) {
+					minMetricSum = thisMetricSum;
+					bestI = i;
+					bestJ = j;
+				}
+				// System.out.println("Best sum so far: " + minMetricSum + " for range ["+ bestI + ", " + bestJ + "]");
 			}
-
-			if (thisMetricSum <= minMetricSum) {
-				minMetricSum = thisMetricSum;
-				bestI = i;
-				bestJ = j;
-			}
+			// System.out.println();
 		}
 
-		List<Integer> desiredOrbits = new ArrayList<Integer>();
-		for (k = bestI; k <= bestJ; k++) {
-			desiredOrbits.add(radiusIndexToAsteroid.get(k));
-		}
+		int bestMedian = (bestJ - bestI) / 2;
+		// System.out.println("Best i: " + bestI);
+		// System.out.println("Best j: " + bestJ);
+		// System.out.println("Best median: " + bestMedian);
 
-		return desiredOrbits;
+		
+		return radiusIndexToAsteroid.get(bestMedian);
+		// List<Integer> desiredOrbits = new ArrayList<Integer>();
+		// for (k = bestI; k <= bestJ; k++) {
+		// 	desiredOrbits.add(radiusIndexToAsteroid.get(k));
+		// }
+
+		// return desiredOrbits;
 
 	}
 
