@@ -38,6 +38,7 @@ public class Player implements pb.sim.Player {
 
 	long sink = -1;
 	int asteroidsToConsider = -1;
+	private boolean has_majority_asteroid = false;
 
 	private ArrayList<Point> find_intersection(Asteroid a, Asteroid b, HashSet<Long> timelist){
 		ArrayList<Point> intersection_list = new ArrayList<Point>();
@@ -302,6 +303,13 @@ public class Player implements pb.sim.Player {
 		System.out.println("max_period: "+max_period/365.0);
 		num_asteroids = asteroids.length;
 		bestpush = new onePush(-1, Double.MAX_VALUE, 1.0, 0, 0, 0, 0, 0);
+		
+		for(int i = 0; i < asteroids.length; i++){
+			if(asteroids[i].mass > Total_mass * 0.5f){
+				has_majority_asteroid = true;
+			}
+		}
+		
 	}
 
 	/**
@@ -568,7 +576,8 @@ public class Player implements pb.sim.Player {
 			found = false;
 			for (j = i; j < radii.length; j++) {
 				massSum += asteroids[j].mass;
-				if (massSum >= 0.5 * totalMass) {
+				float factor = has_majority_asteroid ? 1f : 0.5f; 
+				if (massSum >= factor * totalMass) {
 					found = true;
 					break;
 				}
