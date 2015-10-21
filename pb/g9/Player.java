@@ -268,10 +268,12 @@ public class Player implements pb.sim.Player {
 		double min_value = Double.MAX_VALUE;		int i = 0, j = 0;
 		int target_index = -1;
 		
-		for(;j<asteroids.length;) {
-			for (;sum_mass<target_mass;j++){
+		for(;i<asteroids.length;) {
+			for (;sum_mass<target_mass && j<asteroids.length;j++){
 				sum_mass +=asteroidlist.get(j).getKey().mass;
 			}
+			if (sum_mass < target_mass)
+				break;
 			for (int k=i;k<j;k++){
 				double sum_value = 0;
 				for(int kk = i;kk<j;kk++){
@@ -357,13 +359,11 @@ public class Player implements pb.sim.Player {
 		num_asteroids = asteroids.length;
 		time++;
 		if (time == bestpush.time){
-			//System.out.println("Now: " + bestpush.time + " : will collide at " + bestpush.collision_time);
-
 			// System.out.println("energy: "+ bestpush.energy);
 			// System.out.println("Now Year: " + (1 + bestpush.time / 365));
 			// System.out.println("Now Day: " + (1 + bestpush.time % 365));
-			// System.out.println("Year: " + (1 + bestpush.collision_time / 365));
-			// System.out.println("Day: " + (1 + bestpush.collision_time % 365));
+			// System.out.println("will collide at Year: " + (1 + bestpush.collision_time / 365));
+			// System.out.println("will collide at Day: " + (1 + bestpush.collision_time % 365));
 			push_times++;
 			average_energy = average_energy*((push_times-1.0)/push_times)+bestpush.energy/push_times;
 
