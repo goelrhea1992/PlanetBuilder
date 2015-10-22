@@ -39,6 +39,12 @@ public class Player implements pb.sim.Player {
 	int sink = -1;
 	int asteroidsToConsider = -1;
 
+	double maxEnergy = Double.MIN_VALUE;
+	double minEnergy = Double.MAX_VALUE;
+	double totalEnergy = 0.0;
+	int numberOfCollisions = 0;
+	double averageEnergy = 0.0;
+
 	/**
 	* Returns an array list of all intersection points between the orbits of asteroids a and b.
 	*/
@@ -360,6 +366,16 @@ public class Player implements pb.sim.Player {
 		 	int i = bestpush.i;
 		 	energy[i] = bestpush.energy;
 		 	direction[i] = bestpush.direction;
+		 	if (bestpush.energy > maxEnergy)
+		 		maxEnergy = bestpush.energy;
+		 	else if (bestpush.energy < minEnergy) 
+		 		minEnergy = bestpush.energy;
+		 	totalEnergy += bestpush.energy;
+		 	numberOfCollisions++;
+		 	// if (asteroids[getHeaviestAsteroid(asteroids)].mass >= 0.5 * Total_mass) {
+		 		averageEnergy = totalEnergy/numberOfCollisions;
+		 		System.out.println(totalEnergy + "," + maxEnergy + "," + minEnergy + "," + averageEnergy);
+		 	// }
 		 	
 		 	// do not push again until collision happens
 		 	time_of_push = bestpush.collision_time + 1;
@@ -378,7 +394,9 @@ public class Player implements pb.sim.Player {
 		// first iteration
 		if (iteration == 1) {
 			if (sink == -1) {
-				j = findTargetForSink(asteroids, target_mass);
+				// j = findTargetForSink(asteroids, target_mass);
+				List<Integer> favorableAsteroid = getKLowestWeight(asteroids, 1);
+				j = favorableAsteroid.get(0);
 				sink = j;
 			}
 			else
@@ -465,8 +483,8 @@ public class Player implements pb.sim.Player {
 								if (CheckIncidentalCollisions(push, asteroids, a1)) {
 									bestpush = push;
 								}
-								System.out.println("  Collision prediction !");
-								System.out.println("  Year: " + (1 + t / 365)+"  Day: " + (1 + t % 365));
+								// System.out.println("  Collision prediction !");
+								// System.out.println("  Year: " + (1 + t / 365)+"  Day: " + (1 + t % 365));
 							}
 						}
 					}
@@ -501,7 +519,7 @@ public class Player implements pb.sim.Player {
 				newAstPos   = newAst.orbit.positionAt(pushTime - newAst.epoch) ;
 				otherAstPos = asteroids[i].orbit.positionAt(pushTime - asteroids[i].epoch); 
 				if(Point.distance(newAstPos, otherAstPos) < newAst.radius() + asteroids[i].radius()) {
-					System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
+					// System.out.println("Bad Push: Incidental Collision Detected with Asteroid ");
 					return false;
 				}
 			}
@@ -575,6 +593,88 @@ public class Player implements pb.sim.Player {
 		highestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
 		return highestKIndices;
 	}
+
+	private List<Integer> getKLowestWeight(Asteroid[] asteroids, int k) {
+		/** 
+		* Returns the indices of the K asteroids with the minimum distance to mass ratio.
+		* (Higher the distance mass ratio, more "pushable" the asteroid - costs less energy)
+		* 
+		* Hence, it is not good to push the one with the lowest distance to mass ratio.
+		* because it is too close to the sun, and too heavy.
+		**/
+
+		double[] weights = new double[asteroids.length];
+		double distance = 0.0;
+		double mass = 0.0;
+
+		for (int i = 0; i < asteroids.length; i++) {
+			Asteroid a = asteroids[i];
+			Point a_center = new Point();
+			a.orbit.positionAt(time - a.epoch, a_center);
+			distance = Double
+					.valueOf(Point.distance(a_center, new Point(0, 0)));
+			mass = asteroids[i].mass;
+			weights[i] = distance / mass;
+		}
+
+		List<Integer> lowestKIndices;
+		double[] temp = new double[k];
+		double maxWeight = Integer.MIN_VALUE;
+		int maxIndex = -1;
+		Integer[] tempIndexInWeights = new Integer[k];
+
+		// put k weights in temp, and keep track of max seen so far
+		for (int i = 0; i < k; i++) {
+			temp[i] = weights[i];
+			tempIndexInWeights[i] = i;
+			if (temp[i] > maxWeight) {
+				maxWeight = temp[i];
+				maxIndex = i;
+			}
+		}
+
+		// check remaining weights and maintain lowest k in temp
+		for (int i = k; i < weights.length; i++) {
+			if (weights[i] < maxWeight) {
+				// replace the max so far with this value
+				temp[maxIndex] = weights[i];
+				tempIndexInWeights[maxIndex] = i;
+
+				//find new max
+				maxWeight = Double.MIN_VALUE;
+				maxIndex = -1;
+
+				for (int j = 0; j< k; j++) {
+					if (temp[j] > maxWeight) {
+						maxWeight = temp[j];
+						maxIndex = j;
+					}
+				}
+			}
+		}
+		lowestKIndices = new ArrayList<Integer>(Arrays.asList(tempIndexInWeights));
+		return lowestKIndices;
+	}
+
+	private int getHeaviestAsteroid(Asteroid asteroids[]) {
+		/**
+		* Returns the heaviest asteroid among all asteroids.
+		*/
+
+		int max = 0;
+		double mass = 0.0;
+		double maxMass = Double.MIN_VALUE;
+
+		for (int i = 0; i < asteroids.length; i++) {
+			mass = asteroids[i].mass;
+			if (mass > maxMass) {
+				max = i;
+				maxMass = mass;
+			}
+		}
+		return max;
+	}
+
 }
 
 class onePush {
